@@ -56,6 +56,10 @@ jobs:
     name: 4. DAST Scan (OWASP ZAP)
     needs: staging_deploy
     runs-on: self-hosted
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
