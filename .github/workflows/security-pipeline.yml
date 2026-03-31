@@ -57,6 +57,10 @@ jobs:
     needs: staging_deploy
     runs-on: self-hosted
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Fix permissions for ZAP
+        run: chmod -R 777 .
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
