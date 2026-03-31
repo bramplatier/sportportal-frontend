@@ -3,30 +3,42 @@ name: Security CI/CD Pipeline (Docker & Bare Metal)
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '31 10 * * 2'
 
 jobs:
-  # 2. SAST Scan (CodeQL - De krachtige variant)
-  sast_scan:
+  # 2. SAST Scan (CodeQL - Volledig geconfigureerd)
+  analyze:
     name: 2. SAST Scan (CodeQL)
     runs-on: self-hosted
     permissions:
       actions: read
       contents: read
       security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript-typescript
+          languages: ${{ matrix.language }}
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-  # 3. Docker Staging Deploy
+  # 3. Docker Staging Deploy (Wacht op CodeQL analyze)
   staging_deploy:
     name: 3. Docker Staging
-    needs: sast_scan
+    needs: analyze
     runs-on: self-hosted
     steps:
       - name: Checkout repository
@@ -55,7 +67,7 @@ jobs:
   # 5. Productie Deploy (Bare Metal)
   production_deploy:
     name: 5. Productie Deploy (Bare Metal)
-    needs: [sast_scan, dast_scan]
+    needs: [analyze, dast_scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: self-hosted
     steps:
