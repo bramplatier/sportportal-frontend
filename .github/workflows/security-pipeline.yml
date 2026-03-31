@@ -5,25 +5,19 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # 2. SAST Scan
+  # 2. SAST Scan (Code-analyse)
   sast_scan:
-    name: 2. SAST Scan (CodeQL)
+    name: 2. SAST Scan (njsscan)
     runs-on: self-hosted
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      - name: nodejsscan scan
+        uses: ajinabraham/njsscan-action@v0.0.3
         with:
-          languages: javascript-typescript
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+          args: '.'
 
-  # 3. Docker Staging Deploy (De Docker omgeving)
+  # 3. Docker Staging Deploy
   staging_deploy:
     name: 3. Docker Staging
     needs: sast_scan
@@ -39,7 +33,7 @@ jobs:
           docker rm sportportal-staging || true
           docker run -d --name sportportal-staging -p 8080:80 sportportal-staging
 
-  # 4. DAST Scan
+  # 4. DAST Scan (OWASP ZAP)
   dast_scan:
     name: 4. DAST Scan (OWASP ZAP)
     needs: staging_deploy
@@ -52,7 +46,7 @@ jobs:
           target: 'http://localhost:8080'
           fail_action: true
 
-  # 5. Production Deploy (De "Echte" Server)
+  # 5. Productie Deploy (Bare Metal)
   production_deploy:
     name: 5. Productie Deploy (Bare Metal)
     needs: [sast_scan, dast_scan]
