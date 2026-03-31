@@ -5,17 +5,23 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # 2. SAST Scan (Code-analyse)
+  # 2. SAST Scan (CodeQL - De krachtige variant)
   sast_scan:
-    name: 2. SAST Scan (njsscan)
+    name: 2. SAST Scan (CodeQL)
     runs-on: self-hosted
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: nodejsscan scan
-        uses: ajinabraham/njsscan-action@v0.0.3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          args: '.'
+          languages: javascript-typescript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
   # 3. Docker Staging Deploy
   staging_deploy:
