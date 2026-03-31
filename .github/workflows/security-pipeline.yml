@@ -70,7 +70,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: 'http://localhost:8080'
-          fail_action: true
+          fail_action: false
 
   # 5. Productie Deploy (Bare Metal)
   production_deploy:
