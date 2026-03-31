@@ -50,3 +50,4 @@ Deze service:
 - start automatisch na reboot
 - herstart automatisch bij crash (`Restart=always`)
 - draait op poort `4173`
+\n\nLast Pipeline Test: Tue Mar 31 12:40:58 PM CEST 2026
