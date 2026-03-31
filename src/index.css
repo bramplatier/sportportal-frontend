@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --color-ink: #0f1f2d;
+  --color-muted: #4b5f79;
+  --color-surface: #ffffff;
+  --color-brand: #00a896;
+  --color-brand-strong: #007f73;
+  --color-accent: #d3ff37;
+  --color-accent-strong: #a9dd00;
+  --color-border: #d5deea;
+  --color-danger-bg: #fee2e2;
+  --color-danger-text: #b91c1c;
+  --shadow-soft: 0 20px 45px rgba(5, 19, 40, 0.14);
+  --shadow-card: 0 12px 25px rgba(10, 28, 53, 0.1);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --font-heading: 'Oxanium', 'Segoe UI', sans-serif;
+  --font-body: 'Manrope', 'Segoe UI', sans-serif;
+
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 4% 4%, rgba(0, 168, 150, 0.23), transparent 30%),
+    radial-gradient(circle at 97% 7%, rgba(211, 255, 55, 0.22), transparent 28%),
+    linear-gradient(160deg, #ecf8ff 0%, #f9ffeb 52%, #ffffff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  line-height: 1.45;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.64)),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 168, 150, 0.05) 0,
+      rgba(0, 168, 150, 0.05) 8px,
+      transparent 8px,
+      transparent 16px
+    );
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(169, 221, 0, 0.5);
+  outline-offset: 2px;
+}
+
+.page-content {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+
+@keyframes rise-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 106, 61, 0);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 106, 61, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

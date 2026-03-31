@@ -1,0 +1,69 @@
+name: Security CI/CD Pipeline (Docker & Bare Metal)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # 2. SAST Scan
+  sast_scan:
+    name: 2. SAST Scan (CodeQL)
+    runs-on: self-hosted
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # 3. Docker Staging Deploy (De Docker omgeving)
+  staging_deploy:
+    name: 3. Docker Staging
+    needs: sast_scan
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Staging Container
+        run: docker build -t sportportal-staging .
+      - name: Run Staging Container
+        run: |
+          docker stop sportportal-staging || true
+          docker rm sportportal-staging || true
+          docker run -d --name sportportal-staging -p 8080:80 sportportal-staging
+
+  # 4. DAST Scan
+  dast_scan:
+    name: 4. DAST Scan (OWASP ZAP)
+    needs: staging_deploy
+    runs-on: self-hosted
+    steps:
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: 'http://localhost:8080'
+          fail_action: true
+
+  # 5. Production Deploy (De "Echte" Server)
+  production_deploy:
+    name: 5. Productie Deploy (Bare Metal)
+    needs: [sast_scan, dast_scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Production Files
+        run: |
+          npm install
+          npm run build
+      - name: Restart Systemd Service
+        run: sudo systemctl restart sportportal.service || true

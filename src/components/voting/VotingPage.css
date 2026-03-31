@@ -1,0 +1,131 @@
+.vote-wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.25rem 1rem 3rem;
+  animation: rise-fade 0.52s ease both;
+}
+
+.vote-header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.8vw, 2.3rem);
+  color: #06263f;
+}
+
+.vote-header p {
+  margin-top: 0.55rem;
+  font-weight: 700;
+  color: #007f73;
+}
+
+.vote-note {
+  margin-top: 0.45rem;
+  color: #3d5f79;
+  font-size: 0.9rem;
+}
+
+.vote-error {
+  margin-top: 0.45rem;
+  color: #9f1239;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.winner-box {
+  margin: 1rem 0 1.5rem;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f4ffd2, #dcff8f);
+  color: #2c4300;
+  border: 1px solid rgba(169, 221, 0, 0.38);
+  font-weight: 800;
+}
+
+.vote-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.vote-card {
+  border: 1px solid #cfe3f0;
+  border-radius: 16px;
+  padding: 1.1rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.95rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-card);
+  animation: rise-fade 0.46s ease both;
+}
+
+.vote-card:nth-child(2) { animation-delay: 0.06s; }
+.vote-card:nth-child(3) { animation-delay: 0.12s; }
+
+.vote-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(12, 45, 63, 0.12);
+}
+
+.vote-card.selected {
+  border-color: #00a896;
+  box-shadow: 0 12px 24px rgba(0, 168, 150, 0.2);
+}
+
+.vote-card h2 {
+  margin: 0;
+}
+
+.vote-card p {
+  margin: 0.3rem 0 0;
+  color: #475569;
+}
+
+.vote-button {
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #00a896, #03506f);
+  color: #ecffff;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 0.82rem;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.vote-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.vote-button:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.result-row {
+  position: relative;
+  border-radius: 8px;
+  background: #e8eff6;
+  height: 36px;
+  overflow: hidden;
+  border: 1px solid #d4e2ee;
+}
+
+.result-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #d3ff37, #00a896);
+  transition: width 0.35s ease;
+}
+
+.result-row span {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  z-index: 1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0c2a42;
+}

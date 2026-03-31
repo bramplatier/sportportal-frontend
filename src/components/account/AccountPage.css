@@ -1,0 +1,95 @@
+.account-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem 2.8rem;
+  animation: rise-fade 0.45s ease both;
+}
+
+.account-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.2vw, 2.15rem);
+  color: #0b2a43;
+}
+
+.account-header p {
+  margin-top: 0.45rem;
+  color: #40607d;
+}
+
+.account-note {
+  margin-top: 0.45rem;
+  color: #3d5e7a;
+  font-size: 0.9rem;
+}
+
+.account-error {
+  margin-top: 0.4rem;
+  color: #9f1239;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.account-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.account-card {
+  background: #ffffff;
+  border: 1px solid #d5e1eb;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.account-card h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  color: #163751;
+}
+
+.account-card ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  color: #395876;
+}
+
+.category-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid #dce7ef;
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+}
+
+.category-item span {
+  color: #15354f;
+  font-weight: 700;
+}
+
+.category-item button {
+  border: 1px solid #1f5b80;
+  background: #ffffff;
+  color: #1a4f72;
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 780px) {
+  .account-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,124 @@
+.trainer-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1rem 2.8rem;
+  animation: rise-fade 0.45s ease both;
+}
+
+.trainer-header h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3.3vw, 2.2rem);
+  color: #0a2944;
+}
+
+.trainer-header p {
+  margin-top: 0.5rem;
+  color: #3f617f;
+}
+
+.trainer-note {
+  margin-top: 0.45rem;
+  color: #486983;
+  font-size: 0.9rem;
+}
+
+.trainer-error {
+  margin-top: 0.4rem;
+  color: #9f1239;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.trainer-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.95rem;
+}
+
+.trainer-card {
+  background: #ffffff;
+  border: 1px solid #d5e1ec;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.trainer-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #133652;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.title-row button {
+  border: 1px solid #1e587e;
+  background: #ffffff;
+  color: #1b4d6f;
+  border-radius: 10px;
+  padding: 0.35rem 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.session-list {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.session-item {
+  text-align: left;
+  border: 1px solid #dce7f0;
+  background: #fcfeff;
+  border-radius: 12px;
+  padding: 0.62rem 0.7rem;
+  cursor: pointer;
+}
+
+.session-item strong {
+  display: block;
+  color: #0c2d46;
+}
+
+.session-item span {
+  display: block;
+  margin-top: 0.2rem;
+  color: #4c6881;
+  font-size: 0.85rem;
+}
+
+.session-item.active {
+  border-color: #a9dd00;
+  background: linear-gradient(135deg, #f7ffd8, #f0ffba);
+}
+
+.session-meta {
+  margin-top: 0.4rem;
+  color: #4c6781;
+}
+
+.participants {
+  margin: 0.8rem 0 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 0.45rem;
+  color: #21435f;
+}
+
+.empty {
+  margin-top: 0.8rem;
+  color: #58748d;
+}
+
+@media (max-width: 820px) {
+  .trainer-grid {
+    grid-template-columns: 1fr;
+  }
+}

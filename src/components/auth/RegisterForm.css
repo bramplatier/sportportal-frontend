@@ -1,0 +1,46 @@
+.password-help {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.strength-bar {
+  height: 6px;
+  flex: 1;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.strength-bar.active-1 { background-color: #ef4444; } /* Rood (Zwak) */
+.strength-bar.active-2 { background-color: #f59e0b; } /* Oranje (Matig) */
+.strength-bar.active-3 { background-color: #10b981; } /* Groen (Sterk) */
+.strength-bar.active-4 { background-color: #059669; } /* Donkergroen (Zeer Sterk) */
+
+.strength-label {
+  min-width: 72px;
+  text-align: right;
+  color: #0f172a;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+}

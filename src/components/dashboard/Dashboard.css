@@ -1,0 +1,230 @@
+.dashboard-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.4rem 1rem 2.6rem;
+  animation: rise-fade 0.5s ease both;
+}
+
+.dashboard-header {
+  margin-bottom: 2.2rem;
+  padding: 1.2rem 1.2rem 1.4rem;
+  border: 1px solid rgba(20, 32, 47, 0.08);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(236, 248, 255, 0.92));
+  box-shadow: var(--shadow-card);
+}
+
+.dashboard-header h1 {
+  font-size: clamp(1.6rem, 3.4vw, 2.2rem);
+  color: #062239;
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-header p {
+  color: #355570;
+  font-size: 1.03rem;
+  margin: 0;
+}
+
+.dashboard-hint {
+  margin-top: 0.65rem;
+  color: #3e5d79;
+  font-size: 0.9rem;
+}
+
+.dashboard-error {
+  margin-top: 0.65rem;
+  color: #9f1239;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.quick-action {
+  display: inline-block;
+  margin-top: 1rem;
+  text-decoration: none;
+  color: #052844;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(211, 255, 55, 0.32), rgba(0, 168, 150, 0.2));
+  border: 1px solid rgba(3, 80, 111, 0.22);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.quick-action:hover {
+  color: #001b30;
+  background: linear-gradient(135deg, rgba(211, 255, 55, 0.48), rgba(0, 168, 150, 0.24));
+  transform: translateY(-1px);
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.quick-action.admin-link {
+  background: linear-gradient(135deg, rgba(0, 168, 150, 0.24), rgba(3, 80, 111, 0.26));
+  color: #e8fdff;
+  border-color: rgba(0, 168, 150, 0.35);
+}
+
+.quick-action.admin-link:hover {
+  color: #f4ffff;
+}
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-strip article {
+  background: #ffffff;
+  border: 1px solid #d4e4ef;
+  border-radius: 14px;
+  padding: 0.85rem;
+  box-shadow: var(--shadow-card);
+}
+
+.summary-strip h2 {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: #36526f;
+  letter-spacing: 0.05em;
+}
+
+.summary-strip strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.45rem;
+  color: #072c48;
+}
+
+.dashboard-section h2 {
+  font-size: 1.25rem;
+  color: #374151;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.lesson-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lesson-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 1.25rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid #cde0ef;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: rise-fade 0.45s ease both;
+}
+
+.lesson-card:nth-child(2) { animation-delay: 0.05s; }
+.lesson-card:nth-child(3) { animation-delay: 0.1s; }
+.lesson-card:nth-child(4) { animation-delay: 0.15s; }
+
+.lesson-card:hover {
+  box-shadow: 0 16px 28px rgba(10, 29, 55, 0.12);
+  transform: translateY(-3px);
+}
+
+.lesson-card.subscribed {
+  border-left: 4px solid #00a896;
+}
+
+.lesson-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lesson-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #08263e;
+}
+
+.lesson-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.btn-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-subscribe {
+  background: linear-gradient(135deg, #d3ff37, #a9dd00);
+  color: #102030;
+}
+
+.btn-subscribe:hover {
+  filter: brightness(1.02);
+}
+
+.btn-unsubscribe {
+  background-color: #eff7ff;
+  color: #1f4665;
+}
+
+.btn-unsubscribe:hover {
+  background-color: #d8f2ff;
+  color: #0f3654;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  
+  .lesson-actions {
+    width: 100%;
+  }
+  
+  .btn-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+}

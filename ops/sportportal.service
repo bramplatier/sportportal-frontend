@@ -1,0 +1,17 @@
+[Unit]
+Description=SportPortal Frontend (Vite Preview)
+After=network.target
+
+[Service]
+Type=simple
+User=pindakaas
+WorkingDirectory=/home/pindakaas/sportportal
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start:prod
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
