@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: Security CI/CD Pipeline (DevSecOps)
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -12,8 +12,9 @@ on:
     - cron: '31 10 * * 2'
 
 jobs:
+  # 2. SAST Scan (CodeQL)
   analyze:
-    name: Analyze
+    name: 2. SAST Scan (CodeQL)
     runs-on: self-hosted
     permissions:
       actions: read
@@ -36,3 +37,59 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+
+  # 3. Docker Staging Deploy (Wacht op CodeQL analyze)
+  staging_deploy:
+    name: 3. Docker Staging
+    needs: analyze
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Staging Container
+        run: docker build -t sportportal-staging .
+      - name: Run Staging Container
+        run: |
+          docker stop sportportal-staging || true
+          docker rm sportportal-staging || true
+          docker run -d --name sportportal-staging -p 8080:80 sportportal-staging
+
+  # 4. DAST Scan (OWASP ZAP)
+  dast_scan:
+    name: 4. DAST Scan (OWASP ZAP)
+    needs: staging_deploy
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Fix permissions for ZAP
+        run: chmod -R 777 .
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: 'http://localhost:8080'
+          fail_action: false
+
+  # 5. Productie Deploy (Bare Metal)
+  production_deploy:
+    name: 5. Productie Deploy (Bare Metal)
+    needs: dast_scan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Production Files
+        run: |
+          rm -rf node_modules dist package-lock.json
+          npm install
+          npm run build
+      - name: Restart Systemd Service
+        run: |
+          # Probeer de service te herstarten met een timeout van 30 seconden
+          timeout 30s sudo systemctl restart sportportal.service || echo "Warning: Could not restart service, manual restart may be needed."
