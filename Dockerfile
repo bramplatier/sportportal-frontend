@@ -13,6 +13,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Beveiligde Nginx configuratie
 RUN printf 'server {\n\
   listen 80;\n\
+  server_tokens off; # Verbergt Nginx versie\n\
+  \n\
   # Beveiligingsheaders\n\
   add_header X-Frame-Options "DENY" always;\n\
   add_header X-Content-Type-Options "nosniff" always;\n\
@@ -20,6 +22,9 @@ RUN printf 'server {\n\
   add_header Referrer-Policy "no-referrer-when-downgrade" always;\n\
   add_header Content-Security-Policy "default-src \x27self\x27; script-src \x27self\x27 \x27unsafe-inline\x27; style-src \x27self\x27 \x27unsafe-inline\x27; img-src \x27self\x27 data:; font-src \x27self\x27 data:; connect-src \x27self\x27;" always;\n\
   add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;\n\
+  add_header Cross-Origin-Embedder-Policy "require-corp" always;\n\
+  add_header Cross-Origin-Opener-Policy "same-origin" always;\n\
+  add_header Cross-Origin-Resource-Policy "same-origin" always;\n\
   \n\
   location / {\n\
     root /usr/share/nginx/html;\n\
