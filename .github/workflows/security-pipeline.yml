@@ -87,4 +87,6 @@ jobs:
           npm install
           npm run build
       - name: Restart Systemd Service
-        run: sudo systemctl restart sportportal.service || true
+        run: |
+          # Probeer de service te herstarten met een timeout van 30 seconden
+          timeout 30s sudo systemctl restart sportportal.service || echo "Warning: Could not restart service, manual restart may be needed."
