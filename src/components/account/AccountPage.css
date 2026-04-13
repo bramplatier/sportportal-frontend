@@ -88,6 +88,61 @@
   cursor: pointer;
 }
 
+.account-card button {
+  border: 1px solid #1f5b80;
+  background: #ffffff;
+  color: #1a4f72;
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mfa-card {
+  grid-column: 1 / -1;
+}
+
+.mfa-state {
+  margin: 0.2rem 0 0.85rem;
+  color: #3b5a76;
+}
+
+.mfa-form {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 420px;
+}
+
+.mfa-form label {
+  color: #1d4360;
+  font-weight: 700;
+}
+
+.mfa-form input {
+  border: 1px solid #bfd4e3;
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+}
+
+.mfa-qr {
+  width: 176px;
+  height: 176px;
+  border-radius: 10px;
+  border: 1px solid #d5e1eb;
+}
+
+.mfa-text-break {
+  overflow-wrap: anywhere;
+  color: #3b5a76;
+}
+
+.mfa-message {
+  margin-top: 0.7rem;
+  color: #1b4f74;
+  font-weight: 700;
+}
+
 @media (max-width: 780px) {
   .account-grid {
     grid-template-columns: 1fr;

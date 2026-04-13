@@ -151,6 +151,10 @@
   gap: 0.5rem;
 }
 
+.password-field {
+  position: relative;
+}
+
 .form-group label {
   font-size: 0.875rem;
   color: #244a64;
@@ -170,10 +174,58 @@
   background: #ffffff;
 }
 
+.password-field input {
+  padding-right: 2.9rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #40607d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: rgba(3, 80, 111, 0.1);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #00a896;
+  outline-offset: 2px;
+}
+
+.password-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .admin-login .form-group input {
   background: rgba(3, 24, 40, 0.76);
   color: #f2fcff;
   border-color: rgba(125, 171, 203, 0.52);
+}
+
+.admin-login .password-toggle {
+  color: #9ec8e4;
+}
+
+.admin-login .password-toggle:hover {
+  background: rgba(140, 188, 221, 0.16);
 }
 
 .admin-login .form-group input::placeholder {

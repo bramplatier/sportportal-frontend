@@ -4,12 +4,33 @@ import { authApi } from '../../services/apiClient';
 import { normalizeRole } from '../../utils/auth';
 import './LoginForm.css';
 
+const EyeIcon = ({ closed = false }) => {
+  if (closed) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 3l18 18" />
+        <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+        <path d="M9.1 5.1A10.6 10.6 0 0112 4c6.5 0 10 8 10 8a17.3 17.3 0 01-4 5.3" />
+        <path d="M6.2 6.2A17.6 17.6 0 002 12s3.5 8 10 8a10.8 10.8 0 005.8-1.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M2 12s3.5-8 10-8 10 8 10 8-3.5 8-10 8-10-8-10-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+};
+
 const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
@@ -23,6 +44,23 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
     delay: `${(index % 7) * 0.6}s`,
     duration: `${6 + (index % 4) * 1.2}s`,
   }));
+
+  const isMfaRequired = (result) => Boolean(
+    result?.mfaRequired
+    || result?.mfa_required
+    || result?.requiresMfa
+    || result?.requires_mfa
+    || result?.status === 'MFA_REQUIRED'
+  );
+
+  const getChallengeTokenFromResponse = (result) => (
+    result?.challengeToken
+    || result?.challenge_token
+    || result?.mfaChallengeToken
+    || result?.mfa_challenge_token
+    || result?.challenge?.token
+    || ''
+  );
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,13 +80,15 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
         password: cleanedPassword,
       });
 
-      if (result?.mfaRequired) {
-        if (!result.challengeToken) {
+      if (isMfaRequired(result)) {
+        const mfaChallengeToken = getChallengeTokenFromResponse(result);
+
+        if (!mfaChallengeToken) {
           setError('MFA challenge ontbreekt in server response.');
           return;
         }
 
-        setChallengeToken(result.challengeToken);
+        setChallengeToken(mfaChallengeToken);
         setStep(2);
         return;
       }
@@ -170,17 +210,28 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
             </div>
             <div className="form-group">
               <label htmlFor="password">Wachtwoord</label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                minLength={8}
-                aria-invalid={Boolean(error)}
-              />
+              <div className="password-field">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  minLength={8}
+                  aria-invalid={Boolean(error)}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Verberg wachtwoord' : 'Toon wachtwoord'}
+                  aria-pressed={showPassword}
+                >
+                  <EyeIcon closed={showPassword} />
+                </button>
+              </div>
             </div>
             <button type="submit" className="btn-primary" disabled={isLoading}>
               {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}

@@ -4,6 +4,26 @@ import { authApi } from '../../services/apiClient';
 import './LoginForm.css';
 import './RegisterForm.css';
 
+const EyeIcon = ({ closed = false }) => {
+  if (closed) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 3l18 18" />
+        <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+        <path d="M9.1 5.1A10.6 10.6 0 0112 4c6.5 0 10 8 10 8a17.3 17.3 0 01-4 5.3" />
+        <path d="M6.2 6.2A17.6 17.6 0 002 12s3.5 8 10 8a10.8 10.8 0 005.8-1.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M2 12s3.5-8 10-8 10 8 10 8-3.5 8-10 8-10-8-10-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+};
+
 const calculateStrength = (value) => {
   let score = 0;
   if (!value) return 0;
@@ -20,6 +40,8 @@ const RegisterForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const strength = useMemo(() => calculateStrength(password), [password]);
@@ -94,18 +116,29 @@ const RegisterForm = () => {
           
           <div className="form-group">
             <label htmlFor="password">Wachtwoord</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              placeholder="Minimaal 8 tekens"
-              minLength={8}
-              aria-describedby="password-help password-strength-label"
-              aria-invalid={Boolean(error)}
-            />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="Minimaal 8 tekens"
+                minLength={8}
+                aria-describedby="password-help password-strength-label"
+                aria-invalid={Boolean(error)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Verberg wachtwoord' : 'Toon wachtwoord'}
+                aria-pressed={showPassword}
+              >
+                <EyeIcon closed={showPassword} />
+              </button>
+            </div>
             <small id="password-help" className="password-help">
               Gebruik minstens 8 tekens met hoofdletters, cijfers en liefst een speciaal teken.
             </small>
@@ -128,17 +161,28 @@ const RegisterForm = () => {
 
           <div className="form-group">
             <label htmlFor="confirmPassword">Bevestig Wachtwoord</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              placeholder="Herhaal wachtwoord"
-              minLength={8}
-              aria-invalid={Boolean(error)}
-            />
+            <div className="password-field">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="Herhaal wachtwoord"
+                minLength={8}
+                aria-invalid={Boolean(error)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                aria-label={showConfirmPassword ? 'Verberg bevestigd wachtwoord' : 'Toon bevestigd wachtwoord'}
+                aria-pressed={showConfirmPassword}
+              >
+                <EyeIcon closed={showConfirmPassword} />
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn-primary" disabled={isLoading}>
