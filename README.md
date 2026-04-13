@@ -100,26 +100,26 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-  A[/] --> B[/login]
-  C[/login] --> D{Auth OK?}
+  A["/"] --> B["/login"]
+  C["/login"] --> D{"Auth OK?"}
   D -- Nee --> C
-  D -- Ja, MFA nodig --> E[/api/auth/mfa/verify]
-  D -- Ja, MFA niet nodig --> F[/dashboard]
+  D -- Ja, MFA nodig --> E["/api/auth/mfa/verify"]
+  D -- Ja, MFA niet nodig --> F["/dashboard"]
   E --> F
 
-  G[/register] --> C
+  G["/register"] --> C
 
-  F --> H[/account]
-  F --> I[/activiteiten]
-  F --> J{Rol trainer/admin?}
-  J -- Ja --> K[/trainer]
+  F --> H["/account"]
+  F --> I["/activiteiten"]
+  F --> J{"Rol trainer/admin?"}
+  J -- Ja --> K["/trainer"]
   J -- Nee --> F
 
-  F --> L{Rol admin?}
-  L -- Ja --> M[/admin]
+  F --> L{"Rol admin?"}
+  L -- Ja --> M["/admin"]
   L -- Nee --> F
 
-  N[Onbekende route *] --> C
+  N["Onbekende route *"] --> C
 ```
 
 ## Projectstructuur
