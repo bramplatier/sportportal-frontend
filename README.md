@@ -1,5 +1,5 @@
 # SportPortal
-
+ oe oe a a 
 Overzichtelijke frontend voor het SportPortal-platform, gebouwd met React + Vite.
 
 ## Inhoud
