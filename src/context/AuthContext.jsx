@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authApi } from '../services/apiClient';
+import { authApi, buildApiUrl } from '../services/apiClient';
 import { normalizeRole } from '../utils/auth';
 
 export const AuthContext = createContext();
@@ -29,15 +29,8 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const loginWithGoogle = async () => {
-    try {
-      const res = await authApi.googleStart();
-      if (res.url) {
-        window.location.href = res.url;
-      }
-    } catch (err) {
-      console.error('Google login start failed', err);
-    }
+  const loginWithGoogle = () => {
+    window.location.href = buildApiUrl('/api/auth/google/start');
   };
 
   const logout = async () => {
