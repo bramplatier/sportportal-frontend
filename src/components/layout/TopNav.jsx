@@ -1,25 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PillNav from '../ui/PillNav';
-import { clearSession, getStoredUser } from '../../utils/auth';
+import { hasCapability } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext';
 import './TopNav.css';
 
 const TopNav = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [role, setRole] = useState('customer');
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const closeMenu = () => setMenuOpen(false);
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await logout();
     closeMenu();
+    navigate('/login');
   };
-
-  useEffect(() => {
-    const user = getStoredUser();
-    setRole(user?.role || 'customer');
-  }, [location.pathname]);
 
   useEffect(() => {
     closeMenu();
@@ -29,8 +27,8 @@ const TopNav = () => {
     { to: '/dashboard', label: 'Dashboard' },
     { to: '/account', label: 'Profiel' },
     { to: '/activiteiten', label: 'Stempagina' },
-    ...((role === 'trainer' || role === 'admin') ? [{ to: '/trainer', label: 'Trainer' }] : []),
-    ...(role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
+    ...(hasCapability(user, 'trainer.sessions.view') ? [{ to: '/trainer', label: 'Trainer' }] : []),
+    ...(hasCapability(user, 'admin.users.view') ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 
   return (
@@ -51,7 +49,7 @@ const TopNav = () => {
 
         <div id="main-menu" className={`menu ${menuOpen ? 'open' : ''}`}>
           <PillNav items={navItems} activePath={location.pathname} />
-          <Link className="logout-link" to="/login" onClick={handleLogout}>Uitloggen</Link>
+          <button className="logout-link" onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit', padding: 0 }}>Uitloggen</button>
         </div>
       </nav>
     </header>

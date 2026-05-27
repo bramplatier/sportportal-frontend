@@ -1,22 +1,54 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { customerApi } from '../../services/apiClient';
-import { getStoredUser } from '../../utils/auth';
+import { getCapabilitiesForRole, hasCapability } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import './Dashboard.css';
 
-// Mock data voor de sportlessen
-const INITIAL_LESSONS = [
-  { id: 1, title: 'Bokszaktraining', time: 'Vandaag, 19:00 - 20:00', location: 'Zaal 1', instructor: 'Mike', isSubscribed: true },
-  { id: 2, title: 'CrossFit WOD', time: 'Morgen, 08:00 - 09:00', location: 'Buiten / Rig', instructor: 'Sarah', isSubscribed: false },
-  { id: 3, title: 'Yoga Flow', time: 'Morgen, 10:00 - 11:00', location: 'Studio 2', instructor: 'Lisa', isSubscribed: false },
-  { id: 4, title: 'HIIT Circuit', time: 'Woensdag, 18:30 - 19:15', location: 'Zaal 1', instructor: 'Mike', isSubscribed: true },
-];
+const INITIAL_LESSONS = [];
+
+const deriveTimeLabel = (lesson) => {
+  if (lesson?.time) return lesson.time;
+
+  const rawDate = lesson?.date || lesson?.startsAt || lesson?.starts_at || lesson?.sessionDate || lesson?.session_date;
+  if (!rawDate) return null;
+
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return parsed.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+};
+
+const CAPABILITY_LABELS = {
+  'profile.view': 'Persoonlijk profiel bekijken',
+  'lessons.view.my': 'Eigen lessen bekijken',
+  'lessons.view.available': 'Beschikbare lessen bekijken',
+  'lessons.subscribe': 'Aanmelden voor lessen',
+  'lessons.unsubscribe': 'Afmelden van lessen',
+  'categories.join': 'Aanmelden voor sportcategorieen',
+  'categories.leave': 'Afmelden van sportcategorieen',
+  'trainer.sessions.view': 'Trainersessies bekijken',
+  'trainer.sessions.create': 'Trainingen aanmaken',
+  'trainer.participants.view': 'Deelnemerslijsten bekijken',
+  'trainer.activities.organize': 'Sportactiviteiten organiseren',
+  'trainer.polls.view': 'Polls bekijken',
+  'trainer.polls.create': 'Nieuwe polls aanmaken',
+  'trainer.polls.voters.view': 'Stemmers per poll inzien',
+  'trainer.polls.delete': 'Polls verwijderen',
+  'trainer.polls.activate': 'Actieve stempoll instellen',
+  'admin.users.view': 'Gebruikers beheren',
+  'admin.users.approve': 'Nieuwe gebruikers goedkeuren',
+  'admin.mfa.reset': 'MFA resetten voor accounts',
+  'admin.activities.assign.trainer': 'Trainers koppelen aan activiteiten',
+};
 
 const Dashboard = () => {
+  usePageTitle('Dashboard');
   const [lessons, setLessons] = useState(INITIAL_LESSONS);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMockMode, setIsMockMode] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadLessons = async () => {
@@ -32,9 +64,12 @@ const Dashboard = () => {
         const normalizeLesson = (lesson, subscribed) => ({
           id: lesson.id,
           title: lesson.title,
-          time: lesson.time,
+          date: lesson.date || lesson.startsAt || lesson.starts_at || null,
+          time: deriveTimeLabel(lesson),
           location: lesson.location,
-          instructor: lesson.instructor,
+          trainerId: lesson.trainerId || lesson.trainer_id || null,
+          trainerName: lesson.trainerName || lesson.trainer_name || lesson.instructor || 'Onbekend',
+          instructor: lesson.instructor || lesson.trainerName || lesson.trainer_name || 'Onbekend',
           isSubscribed: subscribed,
         });
 
@@ -46,11 +81,9 @@ const Dashboard = () => {
           : [];
 
         setLessons([...mappedMyLessons, ...mappedAvailableLessons]);
-        setIsMockMode(false);
       } catch (requestError) {
-        setLessons(INITIAL_LESSONS);
-        setIsMockMode(true);
-        setError('Live lessen konden niet geladen worden. Mock data getoond.');
+        setLessons([]);
+        setError('Lessen konden niet geladen worden vanuit de backend.');
       } finally {
         setIsLoading(false);
       }
@@ -71,12 +104,12 @@ const Dashboard = () => {
       ? customerApi.unsubscribeFromLesson({ lessonId: id })
       : customerApi.subscribeToLesson({ lessonId: id });
 
-    syncRequest.catch(() => {
+    syncRequest.catch((err) => {
       // Rollback local state when backend update fails.
       setLessons((previousLessons) => previousLessons.map(
         (lesson) => (lesson.id === id ? { ...lesson, isSubscribed: isCurrentlySubscribed } : lesson),
       ));
-      setError('Wijziging kon niet opgeslagen worden op de server.');
+      setError(err?.message || 'Wijziging kon niet opgeslagen worden op de server.');
     });
   };
 
@@ -84,20 +117,22 @@ const Dashboard = () => {
     () => lessons.filter((lesson) => lesson.isSubscribed),
     [lessons],
   );
-  const [hasAdminAccess] = useState(() => {
-    const user = getStoredUser();
-    return user?.role === 'admin';
-  });
+  const visibleCapabilities = useMemo(
+    () => getCapabilitiesForRole(user.role).filter((capability) => CAPABILITY_LABELS[capability]),
+    [user.role],
+  );
+  const hasAdminAccess = hasCapability(user, 'admin.users.view');
+  const hasTrainerAccess = hasCapability(user, 'trainer.sessions.view');
 
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h1>Mijn SportPortal</h1>
         <p>Welkom terug! Je hebt {upcomingSubscribedLessons.length} geplande lessen.</p>
-        {isMockMode && <p className="dashboard-hint">Mock modus actief: backendlessen zijn niet bereikbaar.</p>}
         {error && <p className="dashboard-error" role="alert">{error}</p>}
         <div className="header-actions">
           <Link className="quick-action" to="/activiteiten">Stem op sportactiviteit</Link>
+          {hasTrainerAccess && <Link className="quick-action" to="/trainer">Open Trainer Panel</Link>}
           {hasAdminAccess && <Link className="quick-action admin-link" to="/admin">Open Admin Panel</Link>}
         </div>
       </header>
@@ -118,10 +153,20 @@ const Dashboard = () => {
       </section>
 
       <section className="dashboard-section">
+        <h2>Jouw Toegang</h2>
+        <p className="dashboard-role-line">Rol: <strong>{user.role}</strong></p>
+        <div className="capability-list" aria-label="Actieve rechten">
+          {visibleCapabilities.map((capability) => (
+            <span className="capability-pill" key={capability}>{CAPABILITY_LABELS[capability]}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="dashboard-section">
         <h2>Aankomende Lessen</h2>
         {isLoading ? (
           <p className="dashboard-hint">Lessen laden...</p>
-        ) : (
+        ) : lessons.length > 0 ? (
           <div className="lesson-list">
             {lessons.map((lesson) => (
               <div key={lesson.id} className={`lesson-card ${lesson.isSubscribed ? 'subscribed' : ''}`}>
@@ -130,7 +175,7 @@ const Dashboard = () => {
                   <div className="lesson-details">
                     <span className="detail-item">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                      {lesson.time}
+                      {lesson.time || 'Tijd onbekend'}
                     </span>
                     <span className="detail-item">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -138,7 +183,7 @@ const Dashboard = () => {
                     </span>
                     <span className="detail-item">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      {lesson.instructor}
+                      {lesson.trainerName || lesson.instructor || 'Onbekend'}
                     </span>
                   </div>
                 </div>
@@ -160,6 +205,8 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
+        ) : (
+          <p className="dashboard-hint">Nog geen lessen ontvangen van backend.</p>
         )}
       </section>
     </div>

@@ -88,6 +88,12 @@
   cursor: pointer;
 }
 
+.category-empty {
+  color: #58748d;
+  font-weight: 600;
+  margin: 0.2rem 0 0;
+}
+
 .account-card button {
   border: 1px solid #1f5b80;
   background: #ffffff;

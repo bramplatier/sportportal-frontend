@@ -1,21 +1,25 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { customerApi } from '../../services/apiClient';
 import { authApi } from '../../services/apiClient';
-import { getStoredUser } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import './AccountPage.css';
 
-const CATEGORIES = [
-  { id: 'kracht', label: 'Krachttraining', joined: true },
-  { id: 'hyrox', label: 'HYROX', joined: false },
-  { id: 'padel', label: 'Padel', joined: true },
-  { id: 'yoga', label: 'Yoga', joined: false },
-];
+const CATEGORIES = [];
+
+const normalizeCategory = (category) => ({
+  id: category?.id || category?.categoryId || category?.slug || '',
+  label: category?.label || category?.name || category?.title || 'Onbekende categorie',
+  joined: Boolean(category?.joined ?? category?.isJoined ?? category?.is_joined),
+});
 
 const AccountPage = () => {
+  usePageTitle('Account');
+  const { user } = useAuth();
   const [categories, setCategories] = useState(CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [isMfaLoading, setIsMfaLoading] = useState(false);
-  const [isMockMode, setIsMockMode] = useState(false);
+  const [isBackendUnavailable, setIsBackendUnavailable] = useState(false);
   const [error, setError] = useState('');
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaMessage, setMfaMessage] = useState('');
@@ -23,18 +27,14 @@ const AccountPage = () => {
   const [mfaDisableCode, setMfaDisableCode] = useState('');
   const [mfaSetupData, setMfaSetupData] = useState(null);
   const [mfaSetupToken, setMfaSetupToken] = useState('');
-  const user = useMemo(() => {
-    const parsed = getStoredUser();
-    return {
-      email: parsed?.email || 'onbekend@sportportal.nl',
-      role: parsed?.role || 'customer',
-      fullName: parsed?.name || 'SportPortal Lid',
-      memberSince: '2024',
-      city: 'Rotterdam',
-    };
-  }, []);
 
-  const [profile, setProfile] = useState(user);
+  const [profile, setProfile] = useState({
+    email: user?.email || 'onbekend@sportportal.nl',
+    role: user?.role || 'customer',
+    fullName: user?.name || user?.fullName || 'SportPortal Lid',
+    memberSince: user?.memberSince || '2024',
+    city: user?.city || 'Rotterdam',
+  });
 
   useEffect(() => {
     const loadAccountData = async () => {
@@ -63,18 +63,14 @@ const AccountPage = () => {
         ));
 
         if (Array.isArray(categoriesData)) {
-          setCategories(categoriesData.map((category) => ({
-            id: category.id,
-            label: category.label,
-            joined: Boolean(category.joined),
-          })));
+          setCategories(categoriesData.map(normalizeCategory).filter((category) => category.id));
         }
 
-        setIsMockMode(false);
+        setIsBackendUnavailable(false);
       } catch (requestError) {
         setProfile(user);
-        setCategories(CATEGORIES);
-        setIsMockMode(true);
+        setCategories([]);
+        setIsBackendUnavailable(true);
         setError('Kon accountdata niet laden van backend.');
       } finally {
         setIsLoading(false);
@@ -86,6 +82,11 @@ const AccountPage = () => {
 
   const toggleCategory = (id) => {
     const current = categories.find((item) => item.id === id);
+    if (!current) {
+      setError('Deze categorie kon niet gevonden worden. Vernieuw de pagina.');
+      return;
+    }
+
     const nextJoined = !current?.joined;
 
     setCategories((prev) => prev.map((item) => (
@@ -95,11 +96,11 @@ const AccountPage = () => {
     customerApi.setCategoryMembership({
       categoryId: id,
       joined: nextJoined,
-    }).catch(() => {
+    }).catch((err) => {
       setCategories((prev) => prev.map((item) => (
         item.id === id ? { ...item, joined: !nextJoined } : item
       )));
-      setError('Wijziging categorie kon niet opgeslagen worden.');
+      setError(err?.message || 'Wijziging categorie kon niet opgeslagen worden.');
     });
   };
 
@@ -178,7 +179,7 @@ const AccountPage = () => {
       <header className="account-header">
         <h1>Mijn Profiel</h1>
         <p>Bekijk je gegevens, lesinschrijvingen en sportcategorieen.</p>
-        {isMockMode && <p className="account-note">Mock modus actief voor account data.</p>}
+        {isBackendUnavailable && <p className="account-note">Live accountdata is momenteel niet bereikbaar.</p>}
         {error && <p className="account-error" role="alert">{error}</p>}
       </header>
 
@@ -197,14 +198,14 @@ const AccountPage = () => {
         <article className="account-card">
           <h2>Sportcategorieen</h2>
           <div className="category-list">
-            {categories.map((category) => (
+            {categories.length > 0 ? categories.map((category) => (
               <div className="category-item" key={category.id}>
                 <span>{category.label}</span>
                 <button type="button" disabled={isLoading} onClick={() => toggleCategory(category.id)}>
                   {category.joined ? 'Afmelden' : 'Aanmelden'}
                 </button>
               </div>
-            ))}
+            )) : <p className="category-empty">Nog geen sportcategorieen ontvangen van backend.</p>}
           </div>
         </article>
 

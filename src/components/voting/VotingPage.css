@@ -30,6 +30,12 @@
   font-weight: 700;
 }
 
+.vote-empty {
+  margin-top: 1rem;
+  color: #58748d;
+  font-weight: 600;
+}
+
 .winner-box {
   margin: 1rem 0 1.5rem;
   padding: 0.95rem 1rem;

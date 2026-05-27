@@ -47,7 +47,7 @@
   opacity: 0.8;
 }
 
-.source-pill.mock {
+.source-pill.offline {
   background: #fef9c3;
   border: 1px solid #fde047;
   color: #713f12;
@@ -141,6 +141,55 @@
   box-shadow: var(--shadow-card);
 }
 
+.admin-user-form-shell {
+  margin-bottom: 1rem;
+  padding: 0.95rem;
+  border: 1px solid #d6e4ef;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #f9fdff, #eef8ff);
+}
+
+.admin-user-form-shell h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #133652;
+}
+
+.admin-user-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 0.8rem;
+}
+
+.admin-user-form label {
+  color: #2f4f69;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-user-form input,
+.admin-user-form select {
+  width: 100%;
+  border: 1px solid #c7d9e7;
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  background: #ffffff;
+  color: #14344f;
+}
+
+.admin-user-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0.25rem;
+  border: 1px solid #0f5f84;
+  background: #ffffff;
+  color: #0f4060;
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .table-shell {
   overflow-x: auto;
 }
@@ -220,6 +269,58 @@ td span {
   color: #41607c;
 }
 
+.trainer-assignment {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.trainer-assignment label {
+  color: #2f4f69;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.trainer-assignment select {
+  border: 1px solid #c7d9e7;
+  border-radius: 10px;
+  padding: 0.42rem 0.52rem;
+  background: #ffffff;
+  color: #14344f;
+}
+
+.user-actions {
+  min-width: 210px;
+  display: grid;
+  gap: 0.32rem;
+}
+
+.user-actions label {
+  color: #2f4f69;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-actions select {
+  border: 1px solid #c7d9e7;
+  border-radius: 10px;
+  padding: 0.36rem 0.5rem;
+  background: #ffffff;
+  color: #14344f;
+}
+
+.user-actions-row {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.user-actions-row .danger {
+  border-color: #be123c;
+  color: #9f1239;
+}
+
 .admin-card button,
 .table-shell button {
   margin-top: 0.6rem;
@@ -246,6 +347,12 @@ td span {
   color: #69809a;
 }
 
+.empty-cell {
+  color: #58748d;
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
 .admin-footer {
   margin-top: 1rem;
 }
@@ -269,6 +376,10 @@ td span {
 @media (max-width: 620px) {
   .admin-metrics,
   .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-form {
     grid-template-columns: 1fr;
   }
 

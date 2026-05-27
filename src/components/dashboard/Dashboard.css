@@ -117,6 +117,28 @@
   font-weight: 700;
 }
 
+.dashboard-role-line {
+  margin: 0;
+  color: #355570;
+}
+
+.capability-list {
+  margin: 0.85rem 0 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.capability-pill {
+  border: 1px solid #c7ddeb;
+  background: #f7fbff;
+  color: #1c4767;
+  border-radius: 999px;
+  padding: 0.34rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .lesson-list {
   display: flex;
   flex-direction: column;

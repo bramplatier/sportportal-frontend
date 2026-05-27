@@ -68,29 +68,60 @@ class ApiError extends Error {
   }
 }
 
+let isRefreshing = false;
+let refreshPromise = null;
+
 const request = async (path, options = {}) => {
   logApiDiagnostics();
 
-  const token = window.localStorage.getItem('sportportal:token');
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const { _skipRetry, ...fetchOptions } = options;
 
   let response;
 
-  try {
-    response = await fetch(buildApiUrl(path), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...(options.headers || {}),
-      },
-      ...options,
-    });
-  } catch (error) {
-    throw new ApiError(
-      `Kan de API niet bereiken op ${API_BASE_URL}. Controleer backend host/poort en VITE_API_BASE_URL.`,
-      0,
-      { cause: String(error) }
-    );
+  const executeFetch = async () => {
+    try {
+      return await fetch(buildApiUrl(path), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(fetchOptions.headers || {}),
+        },
+        credentials: 'include',
+        ...fetchOptions,
+      });
+    } catch (error) {
+      throw new ApiError(
+        `Kan de API niet bereiken op ${API_BASE_URL}. Controleer backend host/poort en VITE_API_BASE_URL.`,
+        0,
+        { cause: String(error) }
+      );
+    }
+  };
+
+  response = await executeFetch();
+
+  if (response.status === 401 && !_skipRetry && path !== '/api/auth/refresh') {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = fetch(buildApiUrl('/api/auth/refresh'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      }).finally(() => {
+        isRefreshing = false;
+        refreshPromise = null;
+      });
+    }
+
+    if (refreshPromise) {
+      try {
+        const refreshResponse = await refreshPromise;
+        if (refreshResponse && refreshResponse.ok) {
+          response = await executeFetch();
+        }
+      } catch (e) {
+        // Ignore refresh failure and let original 401 error throw
+      }
+    }
   }
 
   if (!response.ok) {
@@ -116,18 +147,38 @@ const request = async (path, options = {}) => {
 export const adminApi = {
   getOverview: () => request('/api/admin/overview'),
   getUsers: () => request('/api/admin/users'),
+  getTrainers: () => request('/api/admin/trainers'),
   getActivities: () => request('/api/admin/activities'),
   getVotes: () => request('/api/admin/votes'),
+  createUser: ({ payload }) => request('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
   updateActivityStatus: ({ activityId, status }) => request(`/api/admin/activities/${activityId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   }),
-  approveUser: ({ userId }) => request(`/api/admin/users/${userId}/approve`, {
+  assignTrainerToActivity: ({ activityId, trainerId }) => request(`/api/admin/activities/${activityId}/trainer`, {
+    method: 'PATCH',
+    body: JSON.stringify({ trainerId }),
+  }),
+  updateUser: ({ userId, payload }) => request(`/api/admin/users/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }),
+  deleteUser: ({ userId }) => request(`/api/admin/users/${userId}`, {
+    method: 'DELETE',
+  }),
+  resetUserMfa: ({ userId }) => request(`/api/admin/users/${userId}/mfa/reset`, {
     method: 'POST',
   }),
 };
 
 export const authApi = {
+  me: () => request('/api/me', { _skipRetry: true }),
+  googleStart: () => request('/api/auth/google/start', { _skipRetry: true }),
+  refresh: () => request('/api/auth/refresh', { method: 'POST', _skipRetry: true }),
+  logout: () => request('/api/auth/logout', { method: 'POST', _skipRetry: true }),
   login: ({ email, password }) => request('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -176,7 +227,23 @@ export const trainerApi = {
     method: 'POST',
     body: JSON.stringify({ title, date, location }),
   }),
+  updateSession: ({ sessionId, payload }) => request(`/api/trainer/sessions/${sessionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }),
   getParticipants: ({ sessionId }) => request(`/api/trainer/sessions/${sessionId}/participants`),
+  getPolls: () => request('/api/trainer/polls'),
+  createPoll: ({ payload }) => request('/api/trainer/polls', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  getPollVoters: ({ pollId }) => request(`/api/trainer/polls/${pollId}/votes`),
+  deletePoll: ({ pollId }) => request(`/api/trainer/polls/${pollId}`, {
+    method: 'DELETE',
+  }),
+  setActivePoll: ({ pollId }) => request(`/api/trainer/polls/${pollId}/activate`, {
+    method: 'POST',
+  }),
 };
 
 export const votingApi = {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authApi } from '../../services/apiClient';
-import { normalizeRole } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import './LoginForm.css';
 
 const EyeIcon = ({ closed = false }) => {
@@ -25,8 +26,10 @@ const EyeIcon = ({ closed = false }) => {
 };
 
 const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
+  usePageTitle('Inloggen');
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetchUser, loginWithGoogle } = useAuth();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,25 +96,9 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
         return;
       }
 
-      const rawUser = result?.user || { email: normalizedEmail, role: 'customer' };
-      const user = { ...rawUser, role: normalizeRole(rawUser.role) };
-      const token = result?.accessToken || result?.token || '';
-
-      if (requiredRole && user.role !== requiredRole) {
-        window.localStorage.removeItem('sportportal:user');
-        window.localStorage.removeItem('sportportal:token');
-        setError('Je account heeft geen admin rechten.');
-        return;
-      }
-
-      window.localStorage.setItem('sportportal:user', JSON.stringify(user));
-      if (token) {
-        window.localStorage.setItem('sportportal:token', token);
-      }
-
+      await fetchUser();
       navigate(targetPath);
     } catch (err) {
-      // OWASP: Generieke foutmelding om 'user enumeration' te voorkomen
       setError(err?.message || 'Inloggen mislukt. Controleer je e-mailadres en wachtwoord.');
     } finally {
       setIsLoading(false);
@@ -135,27 +122,12 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
         return;
       }
 
-      const result = await authApi.verifyMfa({
+      await authApi.verifyMfa({
         challengeToken,
         otp: mfaCode,
       });
 
-      const rawUser = result?.user || { email: email.trim().toLowerCase(), role: 'customer' };
-      const user = { ...rawUser, role: normalizeRole(rawUser.role) };
-      const token = result?.accessToken || result?.token || '';
-
-      if (requiredRole && user.role !== requiredRole) {
-        window.localStorage.removeItem('sportportal:user');
-        window.localStorage.removeItem('sportportal:token');
-        setError('Je account heeft geen admin rechten.');
-        return;
-      }
-
-      window.localStorage.setItem('sportportal:user', JSON.stringify(user));
-      if (token) {
-        window.localStorage.setItem('sportportal:token', token);
-      }
-
+      await fetchUser();
       navigate(targetPath);
     } catch (err) {
       setError(err?.message || 'MFA verificatie mislukt. Probeer het opnieuw.');
@@ -195,6 +167,16 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
 
         {step === 1 ? (
           <form onSubmit={handleLogin} className="login-form" aria-busy={isLoading}>
+            {!isAdminLogin && (
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={loginWithGoogle} 
+                style={{ width: '100%', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                Inloggen met Google
+              </button>
+            )}
             <div className="form-group">
               <label htmlFor="email">E-mailadres</label>
               <input
@@ -241,9 +223,8 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
                 <Link to="/login">Naar normale login</Link>
               </div>
             ) : (
-              <div className="auth-link">
-                <Link to="/register">Nog geen account? Registreer.</Link>
-              </div>
+              /* Registratie is tijdelijk uitgeschakeld */
+              null
             )}
           </form>
         ) : (
