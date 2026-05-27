@@ -176,6 +176,7 @@ export const adminApi = {
 
 export const authApi = {
   me: () => request('/api/me', { _skipRetry: true }),
+  googleStart: () => request('/api/auth/google/start', { _skipRetry: true }),
   refresh: () => request('/api/auth/refresh', { method: 'POST', _skipRetry: true }),
   logout: () => request('/api/auth/logout', { method: 'POST', _skipRetry: true }),
   login: ({ email, password }) => request('/api/auth/login', {
@@ -253,4 +254,4 @@ export const votingApi = {
   }),
 };
 
-export { API_BASE_URL, ApiError, request, buildApiUrl };
+export { API_BASE_URL, ApiError, request };
