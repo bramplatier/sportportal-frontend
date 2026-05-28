@@ -31,10 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
-      const res = await authApi.googleStart();
-      if (res.url) {
-        window.location.href = res.url;
-      }
+      window.location.assign('/api/auth/google/start?redirect=true');
     } catch (err) {
       console.error('Google login start failed', err);
     }

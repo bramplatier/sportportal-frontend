@@ -32,6 +32,26 @@
   font-weight: 700;
 }
 
+.mac-warning-banner {
+  margin-top: 0.8rem;
+  padding: 0.8rem 1rem;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+}
+
+.mac-warning-banner strong {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.mac-warning-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .source-pill {
   border-radius: 12px;
   padding: 0.7rem 0.95rem;

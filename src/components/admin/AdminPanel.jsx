@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { API_BASE_URL, adminApi } from '../../services/apiClient';
 import { normalizeRole } from '../../utils/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import useMacVerification from '../../hooks/useMacVerification';
+import MacManagement from './MacManagement';
 import './AdminPanel.css';
 
 const EMPTY_OVERVIEW = {
@@ -88,6 +90,9 @@ const AdminPanel = () => {
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // MAC verification state
+  const { macStatus } = useMacVerification();
 
   useEffect(() => {
     const loadAdminData = async () => {
@@ -306,6 +311,15 @@ const AdminPanel = () => {
         <div>
           <h1>Admin Control Center</h1>
           <p>Beheer gebruikers, activiteiten en stemdata vanuit een centrale cockpit.</p>
+          
+          {/* MAC Verification Warning Banner */}
+          {macStatus?.macVerificationRequired && !macStatus?.isVerified && (
+            <div className="mac-warning-banner">
+              <strong>⚠️ MAC-verificatie vereist</strong>
+              <p>Registreer uw apparaat MAC-adres voor gevoelige bewerkingen. Klik op het "MAC Beheer" tabblad.</p>
+            </div>
+          )}
+          
           {error && <p className="admin-error" role="alert">{error}</p>}
         </div>
 
@@ -362,6 +376,15 @@ const AdminPanel = () => {
             onClick={() => setActiveTab('votes')}
           >
             Votes
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'mac'}
+            className={activeTab === 'mac' ? 'active' : ''}
+            onClick={() => setActiveTab('mac')}
+          >
+            🔒 MAC Beheer
           </button>
         </div>
 
@@ -550,6 +573,10 @@ const AdminPanel = () => {
                 </article>
               )) : <p className="empty-cell">Nog geen stemgegevens ontvangen.</p>}
             </div>
+          )}
+
+          {activeTab === 'mac' && (
+            <MacManagement />
           )}
         </div>
       )}

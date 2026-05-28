@@ -176,7 +176,7 @@ export const adminApi = {
 
 export const authApi = {
   me: () => request('/api/me', { _skipRetry: true }),
-  googleStart: () => request('/api/auth/google/start', { _skipRetry: true }),
+  googleStart: () => window.location.assign('/api/auth/google/start?redirect=true'),
   refresh: () => request('/api/auth/refresh', { method: 'POST', _skipRetry: true }),
   logout: () => request('/api/auth/logout', { method: 'POST', _skipRetry: true }),
   login: ({ email, password }) => request('/api/auth/login', {
@@ -251,6 +251,32 @@ export const votingApi = {
   submitVote: ({ optionId }) => request('/api/voting/vote', {
     method: 'POST',
     body: JSON.stringify({ optionId }),
+  }),
+};
+
+export const macApi = {
+  registerMacAddress: ({ macAddress, deviceName }) => request('/api/admin/mac/register', {
+    method: 'POST',
+    body: JSON.stringify({ macAddress, deviceName }),
+  }),
+  getTrustedMacAddresses: () => request('/api/admin/mac/trusted', {
+    method: 'GET',
+  }),
+  revokeMacAddress: ({ macId }) => request(`/api/admin/mac/${macId}/revoke`, {
+    method: 'POST',
+  }),
+  getMacAccessLog: ({ limit = 50, offset = 0 }) => request(`/api/admin/mac/access-log?limit=${limit}&offset=${offset}`, {
+    method: 'GET',
+  }),
+  getMacPolicy: () => request('/api/admin/mac/policy', {
+    method: 'GET',
+  }),
+  updateMacPolicy: ({ payload }) => request('/api/admin/mac/policy', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }),
+  getVerifyStatus: () => request('/api/admin/mac/verify-status', {
+    method: 'GET',
   }),
 };
 
