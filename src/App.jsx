@@ -69,12 +69,31 @@ const RoleRoute = ({ children, allowedRoles = [], redirectTo = '/dashboard' }) =
 const AuthCallback = () => {
   const { fetchUser, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    const challenge = params.get('challenge');
+
+    if (status === 'mfa' && challenge) {
+      navigate(`/login?challenge=${encodeURIComponent(challenge)}`, { replace: true });
+      return;
+    }
+
+    if (status === 'error') {
+      navigate('/login?error=google_failed', { replace: true });
+      return;
+    }
+
     fetchUser();
-  }, [fetchUser]);
+  }, [fetchUser, location.search, navigate]);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    if (status === 'mfa' || status === 'error') return;
+
     if (!loading) {
       if (user) {
         navigate('/dashboard', { replace: true });
@@ -82,7 +101,7 @@ const AuthCallback = () => {
         navigate('/login', { replace: true });
       }
     }
-  }, [loading, user, navigate]);
+  }, [loading, user, navigate, location.search]);
 
   return <div>Sessie bevestigen...</div>;
 };

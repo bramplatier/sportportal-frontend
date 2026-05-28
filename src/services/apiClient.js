@@ -190,6 +190,7 @@ export const authApi = {
   verifyMfa: ({ challengeToken, otp }) => request('/api/auth/mfa/verify', {
     method: 'POST',
     body: JSON.stringify({ challengeToken, otp }),
+    _skipRetry: true,
   }),
   startMfaSetup: () => request('/api/auth/mfa/setup/start', {
     method: 'POST',
