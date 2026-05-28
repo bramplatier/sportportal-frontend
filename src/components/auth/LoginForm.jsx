@@ -41,6 +41,22 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
   const targetPath = new URLSearchParams(location.search).get('next') || successPath;
   const isAdminLogin = requiredRole === 'admin';
   const title = requiredRole === 'admin' ? 'Admin Login' : 'SportPortal';
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const challenge = params.get('challenge') || params.get('mfa_challenge');
+    const urlError = params.get('error');
+
+    if (challenge) {
+      setChallengeToken(challenge);
+      setStep(2);
+    }
+
+    if (urlError === 'google_failed') {
+      setError('Google login mislukt. Probeer het opnieuw.');
+    }
+  }, [location.search]);
+
   const fallingLines = Array.from({ length: 14 }, (_, index) => ({
     id: index,
     left: `${(index + 1) * 7}%`,
