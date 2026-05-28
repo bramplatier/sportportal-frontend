@@ -38,7 +38,14 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
   const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const targetPath = new URLSearchParams(location.search).get('next') || successPath;
+  const getSafeTargetPath = () => {
+    const next = new URLSearchParams(location.search).get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//')) {
+      return next;
+    }
+    return successPath;
+  };
+  const targetPath = getSafeTargetPath();
   const isAdminLogin = requiredRole === 'admin';
   const title = requiredRole === 'admin' ? 'Admin Login' : 'SportPortal';
 
