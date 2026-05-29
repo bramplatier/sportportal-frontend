@@ -151,10 +151,9 @@ const AdminPanel = () => {
       setUsers(prev => [created, ...prev]);
       setNewUserForm({ name: '', email: '', role: 'trainer', status: 'active', password: '' });
       showSuccess('Gebruiker aangemaakt.');
-      // Direct MFA setup triggeren voor nieuwe gebruiker
       startMfaSetup(created);
     } catch (err) {
-      setError('Aanmaken mislukt. Controleer gegevens.');
+      setError('Aanmaken mislukt.');
     }
   };
 
@@ -177,9 +176,9 @@ const AdminPanel = () => {
 
       <div className="admin-toolbar">
         <div className="tabs">
-          {['users', 'activities', 'mac'].map(tab => (
-            <button key={tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab(tab)}>{tab.toUpperCase()}</button>
-          ))}
+          <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>GEBRUIKERS</button>
+          <button className={activeTab === 'activities' ? 'active' : ''} onClick={() => setActiveTab('activities')}>ACTIVITEITEN</button>
+          <button className={activeTab === 'mac' ? 'active' : ''} onClick={() => setActiveTab('mac')}>🔒 MAC</button>
         </div>
         {activeTab === 'users' && <input type="search" placeholder="Zoek gebruiker..." value={search} onChange={e => setSearch(e.target.value)} />}
       </div>
@@ -248,11 +247,38 @@ const AdminPanel = () => {
               </div>
             </>
           )}
+
+          {activeTab === 'activities' && (
+            <div className="cards-grid">
+              {activities.length > 0 ? activities.map(a => (
+                <article key={a.id} className="admin-card">
+                  <div className="card-header-flex" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                    <h3>{a.title}</h3>
+                    <span className={`status-pill ${a.status}`}>{a.status}</span>
+                  </div>
+                  <p><strong>Trainer:</strong> {a.trainerEmail || a.trainerName || 'Niet toegewezen'}</p>
+                  <p><strong>Datum:</strong> {a.date ? new Date(a.date).toLocaleString('nl-NL') : 'Onbekend'}</p>
+                  <div className="occupancy-info" style={{marginTop: '1rem'}}>
+                    <div className="progress-bg" style={{background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', overflow: 'hidden'}}>
+                      <div className="progress-bar" style={{
+                        background: 'var(--color-brand)', 
+                        width: `${Math.min(100, (a.subscriberCount / (a.capacity || 20)) * 100)}%`,
+                        height: '100%'
+                      }}></div>
+                    </div>
+                    <p style={{fontSize: '0.8rem', marginTop: '0.5rem', color: 'var(--color-muted)'}}>
+                      Bezetting: {a.subscriberCount} / {a.capacity || '∞'}
+                    </p>
+                  </div>
+                </article>
+              )) : <p className="empty-text">Geen activiteiten gevonden.</p>}
+            </div>
+          )}
+
           {activeTab === 'mac' && <MacManagement />}
         </div>
       )}
 
-      {/* Confirmation & MFA Setup Modal */}
       <Modal 
         isOpen={modalConfig.isOpen} 
         onClose={closeModal} 
@@ -266,27 +292,19 @@ const AdminPanel = () => {
       >
         {modalConfig.type === 'DELETE_USER' && <p>Gebruiker {modalConfig.data?.name} definitief verwijderen?</p>}
         {modalConfig.type === 'RESET_MFA' && <p>MFA resetten voor {modalConfig.data?.name}?</p>}
-        
         {modalConfig.type === 'MFA_SETUP' && mfaSetupData && (
           <div className="mfa-setup-area" style={{textAlign: 'center'}}>
-            <p style={{marginBottom: '1rem'}}>Scan de QR-code met een authenticator app voor <strong>{modalConfig.data?.email}</strong></p>
-            <img src={mfaSetupData.qrImageUrl} alt="QR" className="qr-code" style={{border: '10px solid #fff', borderRadius: '10px'}} />
-            <form onSubmit={confirmMfaSetup} className="compact-form" style={{marginTop: '1.5rem'}}>
-              <input 
-                type="text" 
-                placeholder="6-cijferige code" 
-                value={mfaOtp}
-                onChange={(e) => setMfaOtp(e.target.value.replace(/\D/g, ''))}
-                maxLength="6"
-                style={{textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem'}}
-              />
-              <button type="submit" className="btn btn-primary" disabled={isMfaLoading || mfaOtp.length !== 6}>
-                {isMfaLoading ? 'Verifiëren...' : 'MFA Activeren'}
-              </button>
+            <p>Scan QR voor <strong>{modalConfig.data?.email}</strong></p>
+            <img src={mfaSetupData.qrImageUrl} alt="QR" className="qr-code" style={{border: '10px solid #fff', borderRadius: '10px', margin: '1rem 0'}} />
+            <form onSubmit={confirmMfaSetup} className="compact-form">
+              <input type="text" placeholder="6 cijfers" value={mfaOtp} onChange={e => setMfaOtp(e.target.value.replace(/\D/g, ''))} maxLength="6" style={{textAlign: 'center', fontSize: '1.5rem'}} />
+              <button type="submit" className="btn btn-primary" disabled={isMfaLoading || mfaOtp.length !== 6}>Verifiëren</button>
             </form>
           </div>
         )}
       </Modal>
+
+      <footer className="admin-footer"><Link to="/dashboard">← Terug naar Dashboard</Link></footer>
     </section>
   );
 };
