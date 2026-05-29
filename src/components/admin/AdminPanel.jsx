@@ -187,11 +187,16 @@ const AdminPanel = () => {
       <div className="admin-metrics">
         <article><h2>Systeemgebruikers</h2><strong>{overview.totalUsers}</strong></article>
         <article><h2>MFA Adoptie</h2><strong>{overview.mfaEnabled}%</strong></article>
-        <article style={{border: '1px solid var(--color-brand)'}}>
+        <article style={{border: user?.hasPasskey ? '1px solid var(--color-accent)' : '1px solid var(--color-brand)'}}>
           <h2>Jouw Beveiliging</h2>
-          <button className="btn btn-primary btn-full" onClick={registerMyPasskey} disabled={isActionLoading}>
-            {isActionLoading ? 'Bezig...' : 'Registreer Passkey'}
+          <button 
+            className={`btn btn-full ${user?.hasPasskey ? 'btn-accent' : 'btn-primary'}`} 
+            onClick={registerMyPasskey} 
+            disabled={isActionLoading}
+          >
+            {isActionLoading ? 'Bezig...' : user?.hasPasskey ? 'Passkey Vernieuwen' : 'Registreer Passkey'}
           </button>
+          {user?.hasPasskey && <p style={{fontSize: '0.7rem', color: 'var(--color-accent)', marginTop: '0.5rem', textAlign: 'center'}}>✓ Passkey is actief op dit account</p>}
         </article>
       </div>
 
