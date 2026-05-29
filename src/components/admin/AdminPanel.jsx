@@ -22,7 +22,7 @@ const STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
 
 const AdminPanel = () => {
   usePageTitle('Admin Control Center');
-  const { user } = useAuth();
+  const { user: currentUser } = useAuth(); // Hernoemd naar currentUser voor duidelijkheid
   const [overview, setOverview] = useState(EMPTY_OVERVIEW);
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
@@ -107,12 +107,12 @@ const AdminPanel = () => {
     }
   };
 
-  const startMfaSetup = async (user) => {
+  const startMfaSetup = async (targetUser) => {
     setIsActionLoading(true);
     try {
-      const data = await adminApi.startUserMfaSetup({ userId: user.id });
+      const data = await adminApi.startUserMfaSetup({ userId: targetUser.id });
       setMfaSetupData(data);
-      setModalConfig({ isOpen: true, type: 'MFA_SETUP', data: user });
+      setModalConfig({ isOpen: true, type: 'MFA_SETUP', data: targetUser });
     } catch (err) {
       setError('MFA setup starten mislukt.');
     } finally {
@@ -189,16 +189,16 @@ const AdminPanel = () => {
       <div className="admin-metrics">
         <article><h2>Systeemgebruikers</h2><strong>{overview.totalUsers}</strong></article>
         <article><h2>MFA Adoptie</h2><strong>{overview.mfaEnabled}%</strong></article>
-        <article style={{border: user?.hasPasskey ? '1px solid var(--color-accent)' : '1px solid var(--color-brand)'}}>
+        <article style={{border: currentUser?.hasPasskey ? '1px solid var(--color-accent)' : '1px solid var(--color-brand)'}}>
           <h2>Jouw Beveiliging</h2>
           <button 
-            className={`btn btn-full ${user?.hasPasskey ? 'btn-accent' : 'btn-primary'}`} 
+            className={`btn btn-full ${currentUser?.hasPasskey ? 'btn-accent' : 'btn-primary'}`} 
             onClick={registerMyPasskey} 
             disabled={isActionLoading}
           >
-            {isActionLoading ? 'Bezig...' : user?.hasPasskey ? 'Passkey Vernieuwen' : 'Registreer Passkey'}
+            {isActionLoading ? 'Bezig...' : currentUser?.hasPasskey ? 'Passkey Vernieuwen' : 'Registreer Passkey'}
           </button>
-          {user?.hasPasskey && <p style={{fontSize: '0.7rem', color: 'var(--color-accent)', marginTop: '0.5rem', textAlign: 'center'}}>✓ Passkey is actief op dit account</p>}
+          {currentUser?.hasPasskey && <p style={{fontSize: '0.7rem', color: 'var(--color-accent)', marginTop: '0.5rem', textAlign: 'center'}}>✓ Passkey is actief op dit account</p>}
         </article>
       </div>
 
