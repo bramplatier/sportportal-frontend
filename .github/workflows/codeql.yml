@@ -78,7 +78,6 @@ jobs:
   # 5. Productie Deploy (Bare Metal)
   production_deploy:
     name: 5. Productie Deploy (Bare Metal)
-    # needs: dast_scan
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: self-hosted
     steps:
@@ -89,7 +88,15 @@ jobs:
           rm -rf node_modules dist package-lock.json
           npm install
           npm run build
+      - name: Deploy to App Directory
+        run: |
+          # Kopieer de gebouwde bestanden naar de map waar de service draait
+          sudo mkdir -p /home/pindakaas/sportportal
+          sudo rsync -av --delete dist/ /home/pindakaas/sportportal/dist/
+          sudo cp package.json server.js /home/pindakaas/sportportal/
+          # Zorg dat de service de juiste node_modules heeft of link ze
+          sudo cp -r node_modules /home/pindakaas/sportportal/
       - name: Restart Systemd Service
         run: |
-          # Probeer de service te herstarten met een timeout van 30 seconden
+          sudo systemctl daemon-reload
           timeout 30s sudo systemctl restart sportportal.service || echo "Warning: Could not restart service, manual restart may be needed."
