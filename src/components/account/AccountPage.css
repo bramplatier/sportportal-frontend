@@ -193,15 +193,21 @@
   display: flex;
   gap: 0.5rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .compact-form input {
-  flex-grow: 1;
+  flex: 1;
+  min-width: 150px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: var(--radius-md);
+}
+
+.compact-form .btn {
+  flex-shrink: 0;
 }
 
 .qr-code {

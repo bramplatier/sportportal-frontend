@@ -59,7 +59,11 @@ const Dashboard = () => {
         });
 
         const mappedMyLessons = Array.isArray(myLessons) ? myLessons.map((l) => normalizeLesson(l, true)) : [];
-        const mappedAvailableLessons = Array.isArray(availableLessons) ? availableLessons.map((l) => normalizeLesson(l, false)) : [];
+        const mappedAvailableLessons = Array.isArray(availableLessons) 
+          ? availableLessons
+              .filter(l => !mappedMyLessons.some(myL => myL.id === l.id))
+              .map((l) => normalizeLesson(l, false)) 
+          : [];
 
         setLessons([...mappedMyLessons, ...mappedAvailableLessons]);
       } catch (requestError) {
