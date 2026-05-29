@@ -1,26 +1,31 @@
 .admin-wrap {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
+  width: min(1200px, 100% - 2rem);
+  margin: 2rem auto;
 }
 
 .admin-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 2rem;
-  padding: 2rem 0;
+  gap: 1.5rem;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--color-border);
+  padding-bottom: 2rem;
 }
 
 .admin-header h1 {
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
   color: var(--color-brand);
+  line-height: 1.1;
 }
 
 .admin-header p {
   color: var(--color-muted);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  margin-top: 0.5rem;
 }
 
 .admin-error {
@@ -30,37 +35,40 @@
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-danger-text);
+  font-size: 0.9rem;
 }
 
 .mac-warning-banner {
-  margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: rgba(255, 193, 7, 0.1);
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 193, 7, 0.08);
   border: 1px solid #ffc107;
   border-radius: var(--radius-md);
   color: #ffc107;
+  font-size: 0.9rem;
 }
 
 .source-pill {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  padding: 0.75rem 1.25rem;
+  padding: 0.6rem 1.25rem;
   border-radius: 99px;
-  text-align: right;
+  font-size: 0.85rem;
 }
 
 .source-pill span {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-muted);
+  margin-top: 0.1rem;
 }
 
 .source-pill.live { border-color: var(--color-brand); color: var(--color-brand); }
 
 .admin-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
 }
 
 .admin-metrics article {
@@ -68,50 +76,61 @@
   border: 1px solid var(--color-border);
   padding: 1.5rem;
   border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .admin-metrics h2 {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--color-muted);
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
 }
 
 .admin-metrics strong {
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
   color: var(--color-ink);
   font-family: var(--font-heading);
+  line-height: 1;
 }
 
 .admin-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
 }
 
 .tabs {
   background: var(--color-surface-raised);
-  padding: 0.3rem;
+  padding: 0.25rem;
   border-radius: 99px;
   display: flex;
-  gap: 0.3rem;
+  gap: 0.25rem;
   border: 1px solid var(--color-border);
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: none; /* Hide scrollbar for clean pill look */
 }
+
+.tabs::-webkit-scrollbar { display: none; }
 
 .tabs button {
   background: transparent;
   border: none;
   color: var(--color-muted);
-  padding: 0.6rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 99px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: var(--font-heading);
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .tabs button.active {
@@ -123,30 +142,37 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   color: #fff;
-  padding: 0.75rem 1.25rem;
+  padding: 0.6rem 1.25rem;
   border-radius: 99px;
-  min-width: 300px;
+  min-width: 280px;
+  font-size: 0.9rem;
 }
 
 .admin-content {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .admin-user-form-shell {
-  margin-bottom: 3rem;
-  padding: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
 }
 
+.admin-user-form-shell h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1.25rem;
+  color: var(--color-ink);
+}
+
 .admin-user-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
   align-items: flex-end;
 }
 
@@ -161,6 +187,7 @@
   text-transform: uppercase;
   font-weight: 800;
   color: var(--color-muted);
+  letter-spacing: 0.05em;
 }
 
 .admin-user-form input,
@@ -168,22 +195,29 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   color: #fff;
-  padding: 0.75rem;
+  padding: 0.65rem 0.9rem;
   border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  width: 100%;
 }
 
 .admin-user-form button {
   grid-column: 1 / -1;
-  width: fit-content;
+  width: max-content;
+  margin-top: 0.5rem;
 }
 
 .table-shell {
   overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 700px; /* Force scroll on tiny screens instead of squishing */
 }
 
 th {
@@ -193,46 +227,71 @@ th {
   font-size: 0.75rem;
   text-transform: uppercase;
   border-bottom: 2px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 td {
-  padding: 1.25rem 1rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
 }
 
 td strong {
   display: block;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--color-brand);
 }
 
 td span {
   color: var(--color-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .user-actions {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-width: 250px;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.user-actions label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.user-actions select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
 }
 
 .user-actions-row {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.user-actions-row .btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
 }
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
 .admin-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -240,19 +299,34 @@ td span {
 }
 
 .admin-card h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: var(--color-ink);
   text-transform: none;
 }
 
+.admin-card p {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
 .vote-number {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: var(--color-brand);
   font-family: var(--font-heading);
+  line-height: 1;
+}
+
+.admin-footer {
+  margin-top: 1rem;
+}
+
+.admin-footer a {
+  color: var(--color-brand);
+  font-weight: 700;
 }
 
 @media (max-width: 768px) {
-  .admin-header h1 { font-size: 2.5rem; }
-  .admin-toolbar { flex-direction: column; align-items: stretch; }
-  .admin-toolbar input { min-width: 0; }
+  .admin-toolbar { flex-direction: column; align-items: stretch; gap: 1rem; }
+  .admin-toolbar input { min-width: 0; width: 100%; }
+  .admin-user-form button { width: 100%; }
 }
