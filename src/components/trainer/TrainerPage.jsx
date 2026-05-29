@@ -31,7 +31,8 @@ const normalizePoll = (poll) => ({
 });
 
 const normalizeVoter = (entry) => ({
-  id: entry?.id || entry?.voterId || `${entry?.userName || 'voter'}-${Math.random()}`,
+  id: entry?.id || entry?.userId || entry?.voterId || entry?.user_id || `${entry?.userName || 'voter'}-${Math.random()}`,
+  userId: entry?.userId || entry?.voterId || entry?.user_id || entry?.id,
   name: entry?.userName || entry?.name || 'Anoniem',
   option: entry?.optionTitle || entry?.option || '-',
   optionId: entry?.optionId || null,
