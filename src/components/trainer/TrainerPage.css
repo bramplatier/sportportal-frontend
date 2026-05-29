@@ -222,6 +222,57 @@
   min-width: 100px;
 }
 
+.voters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.voter-badge {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.voter-badge:hover {
+  border-color: var(--color-brand);
+  background: rgba(204, 255, 0, 0.02);
+}
+
+.voter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow: hidden;
+}
+
+.voter-info strong {
+  font-size: 0.9rem;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voter-info span {
+  font-size: 0.75rem;
+  color: var(--color-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.participant-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 960px) {
   .trainer-grid { grid-template-columns: 1fr; }
   .trainer-voting-grid { grid-template-columns: 1fr; }

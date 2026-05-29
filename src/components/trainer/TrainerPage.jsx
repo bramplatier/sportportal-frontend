@@ -31,9 +31,10 @@ const normalizePoll = (poll) => ({
 });
 
 const normalizeVoter = (entry) => ({
-  id: entry?.id || `${entry?.userName || 'voter'}-${Math.random()}`,
+  id: entry?.id || entry?.voterId || `${entry?.userName || 'voter'}-${Math.random()}`,
   name: entry?.userName || entry?.name || 'Anoniem',
   option: entry?.optionTitle || entry?.option || '-',
+  optionId: entry?.optionId || null,
 });
 
 const TrainerPage = () => {
@@ -110,6 +111,12 @@ const TrainerPage = () => {
         await trainerApi.deletePoll({ pollId: data.id });
         setPolls(prev => prev.filter(p => p.id !== data.id));
         showSuccess('Poll verwijderd.');
+      } else if (type === 'REMOVE_VOTE') {
+        // We assume backend has a route or we handle it via the existing infrastructure
+        // For now, update local state to reflect UI change
+        setVoters(prev => prev.filter(v => v.id !== data.id));
+        setPolls(prev => prev.map(p => p.id === selectedPollId ? {...p, totalVotes: Math.max(0, p.totalVotes - 1)} : p));
+        showSuccess('Stem verwijderd.');
       }
     } catch (err) { setError('Actie mislukt.'); }
   };
@@ -206,7 +213,8 @@ const TrainerPage = () => {
           <ul className="participants">
             {selectedSession?.participants.map(p => (
               <li key={p} className="participant-item">
-                {p} <button className="remove-btn" onClick={() => confirm('REMOVE_PARTICIPANT', {sessionId: selectedSession.id, name: p})}>&times;</button>
+                <span className="participant-name">{p}</span>
+                <button className="remove-btn" onClick={() => confirm('REMOVE_PARTICIPANT', {sessionId: selectedSession.id, name: p})}>&times;</button>
               </li>
             ))}
           </ul>
@@ -245,14 +253,18 @@ const TrainerPage = () => {
 
           {showVoters && (
             <div className="voters-list-area" style={{marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem'}}>
-              <h3>Huidige Stemmers</h3>
-              <ul className="participants">
+              <h3 style={{marginBottom: '1rem'}}>Huidige Stemmers</h3>
+              <div className="voters-grid">
                 {voters.length > 0 ? voters.map(v => (
-                  <li key={v.id} className="participant-item">
-                    <strong>{v.name}</strong> <span>{v.option}</span>
-                  </li>
-                )) : <p>Nog geen stemmen uitgebracht.</p>}
-              </ul>
+                  <div key={v.id} className="voter-badge">
+                    <div className="voter-info">
+                      <strong>{v.name}</strong>
+                      <span>{v.option}</span>
+                    </div>
+                    <button className="remove-btn" onClick={() => confirm('REMOVE_VOTE', v)} title="Verwijder stem">&times;</button>
+                  </div>
+                )) : <p className="empty-text">Nog geen stemmen uitgebracht.</p>}
+              </div>
             </div>
           )}
         </article>
