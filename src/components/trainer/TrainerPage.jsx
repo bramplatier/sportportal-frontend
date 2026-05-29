@@ -30,6 +30,12 @@ const normalizePoll = (poll) => ({
   totalVotes: Number(poll?.totalVotes || 0),
 });
 
+const normalizeVoter = (entry) => ({
+  id: entry?.id || `${entry?.userName || 'voter'}-${Math.random()}`,
+  name: entry?.userName || entry?.name || 'Anoniem',
+  option: entry?.optionTitle || entry?.option || '-',
+});
+
 const TrainerPage = () => {
   usePageTitle('Trainer');
   const [sessions, setSessions] = useState([]);
@@ -39,9 +45,12 @@ const TrainerPage = () => {
   const [polls, setPolls] = useState([]);
   const [selectedPollId, setSelectedPollId] = useState('');
   const [pollForm, setPollForm] = useState({ title: '', date: '' });
+  const [voters, setVoters] = useState([]);
+  const [showVoters, setShowVoters] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [modal, setModal] = useState({ isOpen: false, type: '', data: null });
 
   useEffect(() => {
@@ -72,11 +81,18 @@ const TrainerPage = () => {
   useEffect(() => {
     if (selectedPoll) {
       setPollForm({ title: selectedPoll.title, date: selectedPoll.closesAt });
+      setVoters([]);
+      setShowVoters(false);
     }
   }, [selectedPollId, polls]);
 
   const confirm = (type, data) => setModal({ isOpen: true, type, data });
   const close = () => setModal({ isOpen: false, type: '', data: null });
+
+  const showSuccess = (msg) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(''), 3000);
+  };
 
   const executeAction = async () => {
     const { type, data } = modal;
@@ -85,12 +101,15 @@ const TrainerPage = () => {
       if (type === 'DELETE_SESSION') {
         await trainerApi.deleteSession({ sessionId: data.id });
         setSessions(prev => prev.filter(s => s.id !== data.id));
+        showSuccess('Training verwijderd.');
       } else if (type === 'REMOVE_PARTICIPANT') {
         await trainerApi.removeParticipant({ sessionId: data.sessionId, participantName: data.name });
         setSessions(prev => prev.map(s => s.id === data.sessionId ? {...s, participants: s.participants.filter(p => p !== data.name)} : s));
+        showSuccess('Deelnemer verwijderd.');
       } else if (type === 'DELETE_POLL') {
         await trainerApi.deletePoll({ pollId: data.id });
         setPolls(prev => prev.filter(p => p.id !== data.id));
+        showSuccess('Poll verwijderd.');
       }
     } catch (err) { setError('Actie mislukt.'); }
   };
@@ -100,17 +119,30 @@ const TrainerPage = () => {
     try {
       await trainerApi.updateSession({ sessionId: selectedSession.id, payload: sessionForm });
       setSessions(prev => prev.map(s => s.id === selectedSession.id ? {...s, ...sessionForm} : s));
+      showSuccess('Wijzigingen opgeslagen.');
     } catch (err) { setError('Opslaan mislukt.'); }
   };
 
   const savePoll = async (e) => {
     e.preventDefault();
     try {
-      // We assume backend has a route or we use the general create/update logic if available
-      // For now we add a generic patch if possible or just update local state if backend support is pending
       await trainerApi.updatePoll({ pollId: selectedPoll.id, payload: { title: pollForm.title, closesAt: pollForm.date } });
       setPolls(prev => prev.map(p => p.id === selectedPoll.id ? {...p, title: pollForm.title, closesAt: pollForm.date} : p));
+      showSuccess('Poll bijgewerkt.');
     } catch (err) { setError('Poll wijzigen mislukt.'); }
+  };
+
+  const loadVoters = async () => {
+    if (showVoters) {
+      setShowVoters(false);
+      return;
+    }
+    try {
+      const data = await trainerApi.getPollVoters({ pollId: selectedPoll.id });
+      const entries = Array.isArray(data?.voters) ? data.voters : Array.isArray(data) ? data : [];
+      setVoters(entries.map(normalizeVoter));
+      setShowVoters(true);
+    } catch (err) { setError('Stemmers laden mislukt.'); }
   };
 
   const createSession = async () => {
@@ -119,6 +151,7 @@ const TrainerPage = () => {
       const norm = normalizeSession(created);
       setSessions(prev => [norm, ...prev]);
       setSelectedSessionId(norm.id);
+      showSuccess('Nieuwe training aangemaakt.');
     } catch (err) { setError('Aanmaken mislukt.'); }
   };
 
@@ -126,6 +159,7 @@ const TrainerPage = () => {
     try {
       await trainerApi.setActivePoll({ pollId: selectedPoll.id });
       setPolls(prev => prev.map(p => ({...p, isActive: p.id === selectedPoll.id})));
+      showSuccess('Poll geactiveerd.');
     } catch (err) { setError('Activeren mislukt.'); }
   };
 
@@ -135,6 +169,7 @@ const TrainerPage = () => {
         <h1>Trainer</h1>
         <p>Sessies & Polls</p>
         {error && <p className="trainer-error">{error}</p>}
+        {success && <p className="alert alert-success" style={{margin: '1rem 0'}}>{success}</p>}
       </header>
 
       <div className="trainer-grid">
@@ -182,7 +217,7 @@ const TrainerPage = () => {
         <article className="trainer-card">
           <h2>Poll Beheer</h2>
           <div className="poll-picker">
-            <select value={selectedPollId} onChange={e => setSelectedPollId(e.target.value)}>
+            <select className="select-styled" style={{width: '100%'}} value={selectedPollId} onChange={e => setSelectedPollId(e.target.value)}>
               {polls.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
             </select>
           </div>
@@ -190,19 +225,35 @@ const TrainerPage = () => {
             <form className="trainer-session-form" style={{marginTop: '1rem'}} onSubmit={savePoll}>
               <label>Poll Titel</label>
               <input type="text" value={pollForm.title} onChange={e => setPollForm(p => ({...p, title: e.target.value}))} />
-              <label>Deadline (Verlengen/Inkorten)</label>
+              <label>Deadline</label>
               <input type="datetime-local" value={pollForm.date} onChange={e => setPollForm(p => ({...p, date: e.target.value}))} />
               
               <div className="poll-summary" style={{borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem'}}>
                 <strong>Status: {selectedPoll.isActive ? <span className="poll-active-badge">ACTIEF</span> : 'Inactief'}</strong>
-                <p>Huidige Stemmen: {selectedPoll.totalVotes}</p>
+                <p>Stemmen: {selectedPoll.totalVotes}</p>
                 <div className="poll-actions">
-                  <button type="submit" className="btn btn-accent">Wijzigingen Opslaan</button>
-                  <button type="button" className="btn btn-primary" onClick={activatePoll} disabled={selectedPoll.isActive}>Activeer</button>
-                  <button type="button" className="btn btn-outline" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder</button>
+                  <button type="submit" className="btn btn-accent">Opslaan</button>
+                  <button type="button" className="btn btn-primary" onClick={loadVoters}>
+                    {showVoters ? 'Verberg Stemmers' : 'Toon Huidige Stemmers'}
+                  </button>
+                  {!selectedPoll.isActive && <button type="button" className="btn btn-outline" onClick={activatePoll}>Activeer</button>}
+                  <button type="button" className="btn btn-danger" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder</button>
                 </div>
               </div>
             </form>
+          )}
+
+          {showVoters && (
+            <div className="voters-list-area" style={{marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem'}}>
+              <h3>Huidige Stemmers</h3>
+              <ul className="participants">
+                {voters.length > 0 ? voters.map(v => (
+                  <li key={v.id} className="participant-item">
+                    <strong>{v.name}</strong> <span>{v.option}</span>
+                  </li>
+                )) : <p>Nog geen stemmen uitgebracht.</p>}
+              </ul>
+            </div>
           )}
         </article>
       </section>
@@ -211,7 +262,7 @@ const TrainerPage = () => {
         <button className="btn btn-outline" onClick={close}>Nee</button>
         <button className="btn btn-danger" onClick={executeAction}>Ja, uitvoeren</button>
       </>}>
-        <p>Weet je zeker dat je deze actie wilt uitvoeren? Dit kan niet ongedaan worden gemaakt.</p>
+        <p>Deze actie kan niet ongedaan worden gemaakt.</p>
       </Modal>
     </section>
   );
