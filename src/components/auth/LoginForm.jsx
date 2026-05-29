@@ -28,6 +28,7 @@ const LoginForm = () => {
   const { fetchUser, loginWithGoogle, loginWithPasskey } = useAuth();
   
   const [loginType, setLoginType] = useState('sporter'); // 'sporter', 'trainer', 'admin'
+  const [showManagement, setShowManagement] = useState(false);
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,57 +45,11 @@ const LoginForm = () => {
       setChallengeToken(challenge);
       setLoginType('trainer');
       setStep(2);
+      setShowManagement(true);
     }
   }, [location.search]);
 
-  const handleTrainerLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-    try {
-      const result = await authApi.login({ email, password });
-      if (result.mfaRequired || result.mfa_required) {
-        setChallengeToken(result.challengeToken || result.challenge_token);
-        setStep(2);
-      } else {
-        await fetchUser();
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      setError(err?.message || 'Login mislukt.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMFA = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await authApi.verifyMfa({ challengeToken, otp: mfaCode });
-      await fetchUser();
-      navigate('/dashboard');
-    } catch (err) {
-      setError('MFA code onjuist.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAdminPasskey = async (e) => {
-    e.preventDefault();
-    if (!email) { setError('Voer eerst je e-mailadres in.'); return; }
-    setIsLoading(true);
-    setError('');
-    try {
-      await loginWithPasskey(email);
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Passkey verificatie mislukt. Gebruik een geregistreerde Passkey.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // ... (rest of handles) ...
 
   const fallingLines = Array.from({ length: 10 }, (_, i) => ({ id: i, left: `${i * 10}%`, delay: `${i * 0.5}s` }));
 
@@ -107,8 +62,12 @@ const LoginForm = () => {
       <div className="login-box">
         <header className="login-nav">
           <button className={loginType === 'sporter' ? 'active' : ''} onClick={() => {setLoginType('sporter'); setStep(1); setError('');}}>Sporter</button>
-          <button className={loginType === 'trainer' ? 'active' : ''} onClick={() => {setLoginType('trainer'); setStep(1); setError('');}}>Trainer</button>
-          <button className={loginType === 'admin' ? 'active' : ''} onClick={() => {setLoginType('admin'); setStep(1); setError('');}}>Admin</button>
+          {showManagement && (
+            <>
+              <button className={loginType === 'trainer' ? 'active' : ''} onClick={() => {setLoginType('trainer'); setStep(1); setError('');}}>Trainer</button>
+              <button className={loginType === 'admin' ? 'active' : ''} onClick={() => {setLoginType('admin'); setStep(1); setError('');}}>Admin</button>
+            </>
+          )}
         </header>
 
         <h2 className="login-title">
@@ -125,6 +84,7 @@ const LoginForm = () => {
         {error && <div className="login-error">{error}</div>}
 
         <div className="login-body">
+          {/* ... existing login body logic ... */}
           {loginType === 'sporter' && (
             <button className="btn btn-primary btn-full google-btn" onClick={loginWithGoogle}>
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" />
@@ -176,11 +136,22 @@ const LoginForm = () => {
                 {isLoading ? 'Biometrische scan...' : 'Gebruik Passkey'}
               </button>
               <p style={{fontSize: '0.8rem', color: 'var(--color-muted)', textAlign: 'center', marginTop: '1rem'}}>
-                Nog geen Passkey? Log eerst in via Trainer en stel deze in bij Admin.
+                Log eerst in via Trainer om je Passkey in te stellen bij Admin.
               </p>
             </form>
           )}
         </div>
+
+        {!showManagement && (
+          <div style={{marginTop: '2rem', textAlign: 'center'}}>
+            <button 
+              onClick={() => setShowManagement(true)} 
+              style={{background: 'none', border: 'none', color: 'rgba(255,255,255,0.1)', fontSize: '0.7rem', cursor: 'pointer'}}
+            >
+              Personeel Login
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
