@@ -24,6 +24,8 @@ const normalizeSession = (session) => ({
 const normalizePoll = (poll) => ({
   id: poll?.id,
   title: poll?.title || 'Onbekende poll',
+  description: poll?.description || '',
+  closesAt: toLocalInputValue(poll?.closesAt || poll?.deadline || ''),
   isActive: Boolean(poll?.isActive || poll?.is_active || poll?.active),
   totalVotes: Number(poll?.totalVotes || 0),
 });
@@ -36,7 +38,7 @@ const TrainerPage = () => {
 
   const [polls, setPolls] = useState([]);
   const [selectedPollId, setSelectedPollId] = useState('');
-  const [pollForm, setPollForm] = useState({ title: '', description: '', closesAt: '', optionsText: '' });
+  const [pollForm, setPollForm] = useState({ title: '', date: '' });
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,7 +67,13 @@ const TrainerPage = () => {
     if (selectedSession) {
       setSessionForm({ title: selectedSession.title, date: selectedSession.date, location: selectedSession.location });
     }
-  }, [selectedSession]);
+  }, [selectedSessionId, sessions]);
+
+  useEffect(() => {
+    if (selectedPoll) {
+      setPollForm({ title: selectedPoll.title, date: selectedPoll.closesAt });
+    }
+  }, [selectedPollId, polls]);
 
   const confirm = (type, data) => setModal({ isOpen: true, type, data });
   const close = () => setModal({ isOpen: false, type: '', data: null });
@@ -93,6 +101,16 @@ const TrainerPage = () => {
       await trainerApi.updateSession({ sessionId: selectedSession.id, payload: sessionForm });
       setSessions(prev => prev.map(s => s.id === selectedSession.id ? {...s, ...sessionForm} : s));
     } catch (err) { setError('Opslaan mislukt.'); }
+  };
+
+  const savePoll = async (e) => {
+    e.preventDefault();
+    try {
+      // We assume backend has a route or we use the general create/update logic if available
+      // For now we add a generic patch if possible or just update local state if backend support is pending
+      await trainerApi.updatePoll({ pollId: selectedPoll.id, payload: { title: pollForm.title, closesAt: pollForm.date } });
+      setPolls(prev => prev.map(p => p.id === selectedPoll.id ? {...p, title: pollForm.title, closesAt: pollForm.date} : p));
+    } catch (err) { setError('Poll wijzigen mislukt.'); }
   };
 
   const createSession = async () => {
@@ -169,14 +187,22 @@ const TrainerPage = () => {
             </select>
           </div>
           {selectedPoll && (
-            <div className="poll-summary">
-              <strong>{selectedPoll.title} {selectedPoll.isActive && <span className="poll-active-badge">ACTIEF</span>}</strong>
-              <p>Stemmen: {selectedPoll.totalVotes}</p>
-              <div className="poll-actions">
-                <button className="btn btn-primary" onClick={activatePoll} disabled={selectedPoll.isActive}>Activeer</button>
-                <button className="btn btn-outline" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder</button>
+            <form className="trainer-session-form" style={{marginTop: '1rem'}} onSubmit={savePoll}>
+              <label>Poll Titel</label>
+              <input type="text" value={pollForm.title} onChange={e => setPollForm(p => ({...p, title: e.target.value}))} />
+              <label>Deadline (Verlengen/Inkorten)</label>
+              <input type="datetime-local" value={pollForm.date} onChange={e => setPollForm(p => ({...p, date: e.target.value}))} />
+              
+              <div className="poll-summary" style={{borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem'}}>
+                <strong>Status: {selectedPoll.isActive ? <span className="poll-active-badge">ACTIEF</span> : 'Inactief'}</strong>
+                <p>Huidige Stemmen: {selectedPoll.totalVotes}</p>
+                <div className="poll-actions">
+                  <button type="submit" className="btn btn-accent">Wijzigingen Opslaan</button>
+                  <button type="button" className="btn btn-primary" onClick={activatePoll} disabled={selectedPoll.isActive}>Activeer</button>
+                  <button type="button" className="btn btn-outline" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder</button>
+                </div>
               </div>
-            </div>
+            </form>
           )}
         </article>
       </section>
