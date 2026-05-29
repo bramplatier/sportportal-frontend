@@ -31,11 +31,16 @@ const AdminPanel = () => {
     role: 'trainer',
     status: 'active',
     password: '',
-    requireMfa: true
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  // Modal & MFA States
   const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', data: null });
+  const [mfaSetupData, setMfaSetupData] = useState(null);
+  const [mfaOtp, setMfaOtp] = useState('');
+  const [isMfaLoading, setIsMfaLoading] = useState(false);
 
   const { macStatus } = useMacVerification();
 
@@ -63,28 +68,73 @@ const AdminPanel = () => {
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users;
     return users.filter(u => 
       (u.name || '').toLowerCase().includes(q) || 
       (u.email || '').toLowerCase().includes(q)
     );
   }, [search, users]);
 
+  const showSuccess = (msg) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
   const confirmAction = (type, data) => setModalConfig({ isOpen: true, type, data });
-  const closeModal = () => setModalConfig({ isOpen: false, type: '', data: null });
+  const closeModal = () => {
+    setModalConfig({ isOpen: false, type: '', data: null });
+    setMfaSetupData(null);
+    setMfaOtp('');
+  };
 
   const executeAction = async () => {
     const { type, data } = modalConfig;
-    closeModal();
     try {
       if (type === 'DELETE_USER') {
         await adminApi.deleteUser({ userId: data.id });
         setUsers(prev => prev.filter(u => u.id !== data.id));
+        showSuccess('Gebruiker verwijderd.');
+        closeModal();
       } else if (type === 'RESET_MFA') {
         await adminApi.resetUserMfa({ userId: data.id });
+        setUsers(prev => prev.map(u => u.id === data.id ? { ...u, mfaEnabled: false } : u));
+        showSuccess('MFA gereset.');
+        closeModal();
       }
     } catch (err) {
-      setError(`Actie ${type} mislukt.`);
+      setError(`Actie mislukt: ${err.message}`);
+    }
+  };
+
+  const startMfaSetup = async (user) => {
+    setIsMfaLoading(true);
+    try {
+      const data = await adminApi.startUserMfaSetup({ userId: user.id });
+      setMfaSetupData(data);
+      setModalConfig({ isOpen: true, type: 'MFA_SETUP', data: user });
+    } catch (err) {
+      setError('MFA setup starten mislukt.');
+    } finally {
+      setIsMfaLoading(false);
+    }
+  };
+
+  const confirmMfaSetup = async (e) => {
+    e.preventDefault();
+    if (mfaOtp.length !== 6) return;
+    setIsMfaLoading(true);
+    try {
+      await adminApi.confirmUserMfaSetup({
+        userId: modalConfig.data.id,
+        otp: mfaOtp,
+        setupToken: mfaSetupData.setupToken
+      });
+      setUsers(prev => prev.map(u => u.id === modalConfig.data.id ? { ...u, mfaEnabled: true } : u));
+      showSuccess('MFA succesvol ingesteld.');
+      closeModal();
+    } catch (err) {
+      setError('MFA verificatie mislukt. Controleer de code.');
+    } finally {
+      setIsMfaLoading(false);
     }
   };
 
@@ -93,15 +143,19 @@ const AdminPanel = () => {
     adminApi.updateUser({ userId, payload: { [field]: value } }).catch(() => setError('Wijziging mislukt.'));
   };
 
-  const createUser = (e) => {
+  const createUser = async (e) => {
     e.preventDefault();
-    adminApi.createUser({ payload: newUserForm }).then(created => {
+    setError('');
+    try {
+      const created = await adminApi.createUser({ payload: newUserForm });
       setUsers(prev => [created, ...prev]);
-      setNewUserForm({ name: '', email: '', role: 'trainer', status: 'active', password: '', requireMfa: true });
-      setError('');
-    }).catch(() => {
-      setError('Aanmaken mislukt. Controleer of het e-mailadres uniek is en het wachtwoord minimaal 8 tekens bevat.');
-    });
+      setNewUserForm({ name: '', email: '', role: 'trainer', status: 'active', password: '' });
+      showSuccess('Gebruiker aangemaakt.');
+      // Direct MFA setup triggeren voor nieuwe gebruiker
+      startMfaSetup(created);
+    } catch (err) {
+      setError('Aanmaken mislukt. Controleer gegevens.');
+    }
   };
 
   return (
@@ -109,43 +163,25 @@ const AdminPanel = () => {
       <header className="admin-header">
         <div>
           <h1>Admin</h1>
-          <p>Beheer van het SportPortal platform</p>
-          {macStatus?.macVerificationRequired && !macStatus?.isVerified && (
-            <div className="mac-warning-banner">⚠️ MAC-verificatie vereist voor beheeracties</div>
-          )}
           {error && <p className="admin-error">{error}</p>}
+          {success && <p className="alert alert-success" style={{margin: '1rem 0'}}>{success}</p>}
         </div>
-        <div className="source-pill live">
-          LIVE
-          <span>{API_BASE_URL}</span>
-        </div>
+        <div className="source-pill live">LIVE <span>{API_BASE_URL}</span></div>
       </header>
 
       <div className="admin-metrics">
-        <article>
-          <h2>Gebruikers</h2>
-          <strong>{overview.totalUsers}</strong>
-        </article>
-        <article>
-          <h2>MFA Adoptie</h2>
-          <strong>{overview.mfaEnabled}%</strong>
-        </article>
+        <article><h2>Gebruikers</h2><strong>{overview.totalUsers}</strong></article>
+        <article><h2>Bezetting</h2><strong>{overview.activeLessons}</strong></article>
+        <article><h2>MFA</h2><strong>{overview.mfaEnabled}%</strong></article>
       </div>
 
       <div className="admin-toolbar">
         <div className="tabs">
-          <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Gebruikers</button>
-          <button className={activeTab === 'activities' ? 'active' : ''} onClick={() => setActiveTab('activities')}>Activiteiten</button>
-          <button className={activeTab === 'mac' ? 'active' : ''} onClick={() => setActiveTab('mac')}>🔒 MAC</button>
+          {['users', 'activities', 'mac'].map(tab => (
+            <button key={tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab(tab)}>{tab.toUpperCase()}</button>
+          ))}
         </div>
-        {activeTab === 'users' && (
-          <input 
-            type="search" 
-            placeholder="Zoek op naam of email..." 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-          />
-        )}
+        {activeTab === 'users' && <input type="search" placeholder="Zoek gebruiker..." value={search} onChange={e => setSearch(e.target.value)} />}
       </div>
 
       {isLoading ? <p>Laden...</p> : (
@@ -165,7 +201,7 @@ const AdminPanel = () => {
                   </div>
                   <div className="form-field">
                     <label>Wachtwoord</label>
-                    <input type="password" placeholder="Min. 8 tekens" value={newUserForm.password} onChange={e => setNewUserForm(p => ({...p, password: e.target.value}))} required minLength={8} />
+                    <input type="password" value={newUserForm.password} onChange={e => setNewUserForm(p => ({...p, password: e.target.value}))} required minLength={8} />
                   </div>
                   <div className="form-field">
                     <label>Rol</label>
@@ -174,26 +210,13 @@ const AdminPanel = () => {
                       <option value="admin">Admin</option>
                     </select>
                   </div>
-                  <div className="checkbox-field">
-                    <label className="checkbox-label">
-                      <input type="checkbox" checked={newUserForm.requireMfa} onChange={e => setNewUserForm(p => ({...p, requireMfa: e.target.checked}))} />
-                      MFA Verplicht stellen
-                    </label>
-                  </div>
                   <button type="submit" className="btn btn-primary">Account Aanmaken</button>
                 </form>
               </section>
 
               <div className="table-shell">
                 <table>
-                  <thead>
-                    <tr>
-                      <th>Gebruiker</th>
-                      <th>Rol</th>
-                      <th>Status</th>
-                      <th>Acties</th>
-                    </tr>
-                  </thead>
+                  <thead><tr><th>Gebruiker</th><th>Rol</th><th>Status</th><th>Acties</th></tr></thead>
                   <tbody>
                     {filteredUsers.map(u => (
                       <tr key={u.id}>
@@ -210,7 +233,11 @@ const AdminPanel = () => {
                         </td>
                         <td>
                           <div className="user-actions-row">
-                            <button className="btn btn-outline" onClick={() => confirmAction('RESET_MFA', u)}>MFA Reset</button>
+                            {!u.mfaEnabled ? (
+                              <button className="btn btn-accent" onClick={() => startMfaSetup(u)}>MFA Instellen</button>
+                            ) : (
+                              <button className="btn btn-outline" onClick={() => confirmAction('RESET_MFA', u)}>MFA Reset</button>
+                            )}
                             <button className="btn btn-danger" onClick={() => confirmAction('DELETE_USER', u)}>Verwijder</button>
                           </div>
                         </td>
@@ -221,40 +248,45 @@ const AdminPanel = () => {
               </div>
             </>
           )}
-
-          {activeTab === 'activities' && (
-            <div className="cards-grid">
-              {activities.map(a => (
-                <article key={a.id} className="admin-card">
-                  <h3>{a.title}</h3>
-                  <p>Status: <span className="status-pill">{a.status}</span></p>
-                  <p>Bezetting: {a.enrolled}/{a.capacity}</p>
-                </article>
-              ))}
-            </div>
-          )}
-
           {activeTab === 'mac' && <MacManagement />}
         </div>
       )}
 
+      {/* Confirmation & MFA Setup Modal */}
       <Modal 
         isOpen={modalConfig.isOpen} 
         onClose={closeModal} 
-        title="Bevestiging"
-        actions={<>
-          <button className="btn btn-outline" onClick={closeModal}>Nee</button>
-          <button className={`btn ${modalConfig.type === 'DELETE_USER' ? 'btn-danger' : 'btn-primary'}`} onClick={executeAction}>Ja, uitvoeren</button>
-        </>}
+        title={modalConfig.type === 'MFA_SETUP' ? "MFA Instellen" : "Bevestiging"}
+        actions={modalConfig.type !== 'MFA_SETUP' && (
+          <>
+            <button className="btn btn-outline" onClick={closeModal}>Nee</button>
+            <button className={`btn ${modalConfig.type === 'DELETE_USER' ? 'btn-danger' : 'btn-primary'}`} onClick={executeAction}>Ja, uitvoeren</button>
+          </>
+        )}
       >
-        <p>
-          {modalConfig.type === 'DELETE_USER' 
-            ? `Gebruiker ${modalConfig.data?.name} definitief verwijderen?`
-            : `MFA resetten voor ${modalConfig.data?.name}? De gebruiker moet MFA opnieuw instellen bij volgende login.`}
-        </p>
+        {modalConfig.type === 'DELETE_USER' && <p>Gebruiker {modalConfig.data?.name} definitief verwijderen?</p>}
+        {modalConfig.type === 'RESET_MFA' && <p>MFA resetten voor {modalConfig.data?.name}?</p>}
+        
+        {modalConfig.type === 'MFA_SETUP' && mfaSetupData && (
+          <div className="mfa-setup-area" style={{textAlign: 'center'}}>
+            <p style={{marginBottom: '1rem'}}>Scan de QR-code met een authenticator app voor <strong>{modalConfig.data?.email}</strong></p>
+            <img src={mfaSetupData.qrImageUrl} alt="QR" className="qr-code" style={{border: '10px solid #fff', borderRadius: '10px'}} />
+            <form onSubmit={confirmMfaSetup} className="compact-form" style={{marginTop: '1.5rem'}}>
+              <input 
+                type="text" 
+                placeholder="6-cijferige code" 
+                value={mfaOtp}
+                onChange={(e) => setMfaOtp(e.target.value.replace(/\D/g, ''))}
+                maxLength="6"
+                style={{textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem'}}
+              />
+              <button type="submit" className="btn btn-primary" disabled={isMfaLoading || mfaOtp.length !== 6}>
+                {isMfaLoading ? 'Verifiëren...' : 'MFA Activeren'}
+              </button>
+            </form>
+          </div>
+        )}
       </Modal>
-
-      <footer className="admin-footer"><Link to="/dashboard">← Terug naar Dashboard</Link></footer>
     </section>
   );
 };

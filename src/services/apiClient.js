@@ -172,6 +172,13 @@ export const adminApi = {
   resetUserMfa: ({ userId }) => request(`/api/admin/users/${userId}/mfa/reset`, {
     method: 'POST',
   }),
+  startUserMfaSetup: ({ userId }) => request(`/api/admin/users/${userId}/mfa/setup/start`, {
+    method: 'POST',
+  }),
+  confirmUserMfaSetup: ({ userId, otp, setupToken }) => request(`/api/admin/users/${userId}/mfa/setup/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ otp, setupToken }),
+  }),
 };
 
 export const authApi = {
