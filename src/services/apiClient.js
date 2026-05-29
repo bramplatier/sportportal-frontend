@@ -243,6 +243,9 @@ export const trainerApi = {
   deletePoll: ({ pollId }) => request(`/api/trainer/polls/${pollId}`, {
     method: 'DELETE',
   }),
+  deleteVote: ({ pollId, userId }) => request(`/api/trainer/polls/${pollId}/votes/${userId}`, {
+    method: 'DELETE',
+  }),
   updatePoll: ({ pollId, payload }) => request(`/api/trainer/polls/${pollId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),

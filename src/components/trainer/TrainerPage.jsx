@@ -112,8 +112,7 @@ const TrainerPage = () => {
         setPolls(prev => prev.filter(p => p.id !== data.id));
         showSuccess('Poll verwijderd.');
       } else if (type === 'REMOVE_VOTE') {
-        // We assume backend has a route or we handle it via the existing infrastructure
-        // For now, update local state to reflect UI change
+        await trainerApi.deleteVote({ pollId: selectedPollId, userId: data.userId });
         setVoters(prev => prev.filter(v => v.id !== data.id));
         setPolls(prev => prev.map(p => p.id === selectedPollId ? {...p, totalVotes: Math.max(0, p.totalVotes - 1)} : p));
         showSuccess('Stem verwijderd.');
