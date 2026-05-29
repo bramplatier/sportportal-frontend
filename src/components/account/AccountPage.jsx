@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { customerApi } from '../../services/apiClient';
-import { authApi } from '../../services/apiClient';
+import { useNavigate } from 'react-router-dom';
+import { customerApi, authApi } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import './AccountPage.css';
-
-const CATEGORIES = [];
 
 const normalizeCategory = (category) => ({
   id: category?.id || category?.categoryId || category?.slug || '',
@@ -15,12 +13,17 @@ const normalizeCategory = (category) => ({
 
 const AccountPage = () => {
   usePageTitle('Account');
-  const { user } = useAuth();
-  const [categories, setCategories] = useState(CATEGORIES);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMfaLoading, setIsMfaLoading] = useState(false);
-  const [isBackendUnavailable, setIsBackendUnavailable] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaMessage, setMfaMessage] = useState('');
   const [mfaSetupCode, setMfaSetupCode] = useState('');
@@ -29,11 +32,11 @@ const AccountPage = () => {
   const [mfaSetupToken, setMfaSetupToken] = useState('');
 
   const [profile, setProfile] = useState({
-    email: user?.email || 'onbekend@sportportal.nl',
+    email: user?.email || '',
     role: user?.role || 'customer',
     fullName: user?.name || user?.fullName || 'SportPortal Lid',
-    memberSince: user?.memberSince || '2024',
-    city: user?.city || 'Rotterdam',
+    memberSince: '2024',
+    city: 'Rotterdam',
   });
 
   useEffect(() => {
@@ -47,31 +50,24 @@ const AccountPage = () => {
           customerApi.getCategories(),
         ]);
 
-        setProfile({
-          email: profileData?.email || user.email,
-          role: profileData?.role || user.role,
-          fullName: profileData?.fullName || user.fullName,
-          memberSince: profileData?.memberSince || user.memberSince,
-          city: profileData?.city || user.city,
-        });
+        if (profileData?.user) {
+          const u = profileData.user;
+          setProfile({
+            email: u.email || user.email,
+            role: u.role || user.role,
+            fullName: u.fullName || user.fullName || 'SportPortal Lid',
+            memberSince: u.createdAt ? new Date(u.createdAt).getFullYear().toString() : '2024',
+            city: u.city || 'Rotterdam',
+          });
+        }
 
-        setMfaEnabled(Boolean(
-          profileData?.mfaEnabled
-          || profileData?.mfa_enabled
-          || profileData?.hasMfa
-          || profileData?.has_mfa
-        ));
+        setMfaEnabled(Boolean(profileData?.mfaEnabled || profileData?.mfa_enabled));
 
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData.map(normalizeCategory).filter((category) => category.id));
         }
-
-        setIsBackendUnavailable(false);
       } catch (requestError) {
-        setProfile(user);
-        setCategories([]);
-        setIsBackendUnavailable(true);
-        setError('Kon accountdata niet laden van backend.');
+        setError('Kon accountdata niet laden van de server.');
       } finally {
         setIsLoading(false);
       }
@@ -80,28 +76,29 @@ const AccountPage = () => {
     loadAccountData();
   }, [user]);
 
-  const toggleCategory = (id) => {
+  const toggleCategory = async (id) => {
     const current = categories.find((item) => item.id === id);
-    if (!current) {
-      setError('Deze categorie kon niet gevonden worden. Vernieuw de pagina.');
-      return;
-    }
+    if (!current) return;
 
-    const nextJoined = !current?.joined;
+    const nextJoined = !current.joined;
 
+    // Optimistic update
     setCategories((prev) => prev.map((item) => (
       item.id === id ? { ...item, joined: nextJoined } : item
     )));
 
-    customerApi.setCategoryMembership({
-      categoryId: id,
-      joined: nextJoined,
-    }).catch((err) => {
+    try {
+      await customerApi.setCategoryMembership({
+        categoryId: id,
+        joined: nextJoined,
+      });
+    } catch (err) {
+      // Revert on error
       setCategories((prev) => prev.map((item) => (
         item.id === id ? { ...item, joined: !nextJoined } : item
       )));
-      setError(err?.message || 'Wijziging categorie kon niet opgeslagen worden.');
-    });
+      setError(err?.message || 'Wijziging kon niet worden opgeslagen.');
+    }
   };
 
   const handleStartMfaSetup = async () => {
@@ -110,172 +107,217 @@ const AccountPage = () => {
 
     try {
       const response = await authApi.startMfaSetup();
-      const extractedSetupToken = response?.setupToken || response?.setup_token || '';
-
       setMfaSetupData({
-        qrImageUrl: response?.qrImageUrl || response?.qr_image_url || response?.qrCodeDataUrl || response?.qr_code_data_url || '',
-        otpAuthUri: response?.otpAuthUri || response?.otpauth_uri || response?.otpauthUrl || response?.otpauth_url || '',
-        secret: response?.secret || response?.manualEntryKey || response?.manual_entry_key || '',
+        qrImageUrl: response?.qrImageUrl || response?.qr_image_url || '',
+        secret: response?.secret || response?.manualEntryKey || '',
       });
-      setMfaSetupToken(extractedSetupToken);
-      setMfaMessage('Scan de QR-code in je authenticator app en bevestig met een 6-cijferige code.');
+      setMfaSetupToken(response?.setupToken || response?.setup_token || '');
+      setMfaMessage('Scan de QR-code en voer de 6-cijferige code in.');
     } catch (requestError) {
-      setMfaMessage(requestError?.message || 'Kon MFA setup niet starten.');
+      setMfaMessage(requestError?.message || 'MFA setup mislukt.');
     } finally {
       setIsMfaLoading(false);
     }
   };
 
-  const handleConfirmMfaSetup = async (event) => {
-    event.preventDefault();
+  const handleConfirmMfaSetup = async (e) => {
+    e.preventDefault();
+    if (mfaSetupCode.length !== 6) return;
 
-    if (mfaSetupCode.length !== 6) {
-      setMfaMessage('Vul een geldige 6-cijferige code in.');
-      return;
-    }
-
-    setMfaMessage('');
     setIsMfaLoading(true);
-
     try {
       await authApi.confirmMfaSetup({ otp: mfaSetupCode, setupToken: mfaSetupToken });
       setMfaEnabled(true);
       setMfaSetupData(null);
-      setMfaSetupToken('');
       setMfaSetupCode('');
       setMfaMessage('MFA is succesvol ingeschakeld.');
-    } catch (requestError) {
-      setMfaMessage(requestError?.message || 'MFA bevestigen is mislukt.');
+    } catch (err) {
+      setMfaMessage(err?.message || 'Bevestiging mislukt.');
     } finally {
       setIsMfaLoading(false);
     }
   };
 
-  const handleDisableMfa = async (event) => {
-    event.preventDefault();
+  const handleDisableMfa = async (e) => {
+    e.preventDefault();
+    if (mfaDisableCode.length !== 6) return;
 
-    if (mfaDisableCode.length !== 6) {
-      setMfaMessage('Vul een geldige 6-cijferige code in om MFA uit te schakelen.');
-      return;
-    }
-
-    setMfaMessage('');
     setIsMfaLoading(true);
-
     try {
       await authApi.disableMfa({ otp: mfaDisableCode });
       setMfaEnabled(false);
       setMfaDisableCode('');
       setMfaMessage('MFA is uitgeschakeld.');
-    } catch (requestError) {
-      setMfaMessage(requestError?.message || 'MFA uitschakelen is mislukt.');
+    } catch (err) {
+      setMfaMessage(err?.message || 'Uitschakelen mislukt.');
     } finally {
       setIsMfaLoading(false);
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setError('');
+    try {
+      await customerApi.deleteAccount();
+      // On success, the backend clears cookies. We just need to logout on frontend and redirect.
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      setError(err?.message || 'Account verwijderen mislukt.');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <section className="account-wrap">
-      <header className="account-header">
-        <h1>Mijn Profiel</h1>
-        <p>Bekijk je gegevens, lesinschrijvingen en sportcategorieen.</p>
-        {isBackendUnavailable && <p className="account-note">Live accountdata is momenteel niet bereikbaar.</p>}
-        {error && <p className="account-error" role="alert">{error}</p>}
+    <div className="account-container">
+      <header className="account-hero">
+        <div className="hero-content">
+          <span className="badge">Mijn Profiel</span>
+          <h1>{profile.fullName}</h1>
+          <p className="subtitle">Beheer je sportieve reis bij SportPortal</p>
+        </div>
       </header>
 
-      <div className="account-grid">
-        <article className="account-card">
-          <h2>Persoonlijke gegevens</h2>
-          <ul>
-            <li><strong>Naam:</strong> {profile.fullName}</li>
-            <li><strong>E-mail:</strong> {profile.email}</li>
-            <li><strong>Rol:</strong> {profile.role}</li>
-            <li><strong>Lid sinds:</strong> {profile.memberSince}</li>
-            <li><strong>Woonplaats:</strong> {profile.city}</li>
-          </ul>
-        </article>
+      {error && <div className="alert alert-error">{error}</div>}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
-        <article className="account-card">
-          <h2>Sportcategorieen</h2>
-          <div className="category-list">
-            {categories.length > 0 ? categories.map((category) => (
-              <div className="category-item" key={category.id}>
-                <span>{category.label}</span>
-                <button type="button" disabled={isLoading} onClick={() => toggleCategory(category.id)}>
-                  {category.joined ? 'Afmelden' : 'Aanmelden'}
-                </button>
-              </div>
-            )) : <p className="category-empty">Nog geen sportcategorieen ontvangen van backend.</p>}
+      <div className="account-bento">
+        {/* Profile Card */}
+        <section className="bento-card profile-card">
+          <div className="card-header">
+            <div className="icon-circle">👤</div>
+            <h2>Gegevens</h2>
           </div>
-        </article>
+          <div className="card-content">
+            <div className="info-row">
+              <span className="label">E-mail</span>
+              <span className="value">{profile.email}</span>
+            </div>
+            <div className="info-row">
+              <span className="label">Rol</span>
+              <span className="value role-badge">{profile.role}</span>
+            </div>
+            <div className="info-row">
+              <span className="label">Lid sinds</span>
+              <span className="value">{profile.memberSince}</span>
+            </div>
+            <div className="info-row">
+              <span className="label">Stad</span>
+              <span className="value">{profile.city}</span>
+            </div>
+          </div>
+        </section>
 
-        <article className="account-card mfa-card">
-          <h2>Beveiliging (MFA)</h2>
-          <p className="mfa-state">
-            Status: <strong>{mfaEnabled ? 'Ingeschakeld' : 'Uitgeschakeld'}</strong>
-          </p>
+        {/* Categories Card */}
+        <section className="bento-card categories-card">
+          <div className="card-header">
+            <div className="icon-circle">🏃</div>
+            <h2>Mijn Sporten</h2>
+          </div>
+          <div className="card-content">
+            {categories.length > 0 ? (
+              <div className="sport-grid">
+                {categories.map((cat) => (
+                  <button 
+                    key={cat.id} 
+                    className={`sport-chip ${cat.joined ? 'active' : ''}`}
+                    onClick={() => toggleCategory(cat.id)}
+                    disabled={isLoading}
+                  >
+                    {cat.label}
+                    <span className="chip-status">{cat.joined ? '✓' : '+'}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state">Geen sportcategorieën beschikbaar.</p>
+            )}
+          </div>
+        </section>
 
-          {!mfaEnabled && !mfaSetupData && (
-            <button type="button" onClick={handleStartMfaSetup} disabled={isMfaLoading}>
-              {isMfaLoading ? 'MFA setup starten...' : 'MFA inschakelen'}
-            </button>
-          )}
+        {/* Security Card */}
+        <section className="bento-card security-card">
+          <div className="card-header">
+            <div className="icon-circle">🔒</div>
+            <h2>Beveiliging</h2>
+          </div>
+          <div className="card-content">
+            <div className="mfa-status-box">
+              <span className={`status-dot ${mfaEnabled ? 'enabled' : 'disabled'}`}></span>
+              <p>Multi-Factor Authenticatie: <strong>{mfaEnabled ? 'Actief' : 'Inactief'}</strong></p>
+            </div>
 
-          {!mfaEnabled && mfaSetupData && (
-            <form className="mfa-form" onSubmit={handleConfirmMfaSetup}>
-              {mfaSetupData.qrImageUrl && (
-                <img className="mfa-qr" src={mfaSetupData.qrImageUrl} alt="MFA QR code" />
-              )}
-              {mfaSetupData.otpAuthUri && (
-                <p className="mfa-text-break">URI: {mfaSetupData.otpAuthUri}</p>
-              )}
-              {mfaSetupData.secret && (
-                <p>Handmatige code: <strong>{mfaSetupData.secret}</strong></p>
-              )}
-
-              <label htmlFor="mfaSetupCode">Bevestig code uit authenticator</label>
-              <input
-                id="mfaSetupCode"
-                type="text"
-                value={mfaSetupCode}
-                onChange={(e) => setMfaSetupCode(e.target.value.replace(/\D/g, ''))}
-                maxLength="6"
-                inputMode="numeric"
-                placeholder="123456"
-                pattern="[0-9]{6}"
-                required
-              />
-
-              <button type="submit" disabled={isMfaLoading}>
-                {isMfaLoading ? 'Bevestigen...' : 'MFA bevestigen'}
+            {!mfaEnabled && !mfaSetupData && (
+              <button className="btn btn-primary btn-full" onClick={handleStartMfaSetup} disabled={isMfaLoading}>
+                {isMfaLoading ? 'Laden...' : 'MFA Inschakelen'}
               </button>
-            </form>
-          )}
+            )}
 
-          {mfaEnabled && (
-            <form className="mfa-form" onSubmit={handleDisableMfa}>
-              <label htmlFor="mfaDisableCode">Code voor uitschakelen</label>
-              <input
-                id="mfaDisableCode"
-                type="text"
-                value={mfaDisableCode}
-                onChange={(e) => setMfaDisableCode(e.target.value.replace(/\D/g, ''))}
-                maxLength="6"
-                inputMode="numeric"
-                placeholder="123456"
-                pattern="[0-9]{6}"
-                required
-              />
-              <button type="submit" disabled={isMfaLoading}>
-                {isMfaLoading ? 'Uitschakelen...' : 'MFA uitschakelen'}
+            {mfaSetupData && (
+              <div className="mfa-setup-area">
+                {mfaSetupData.qrImageUrl && <img src={mfaSetupData.qrImageUrl} alt="QR" className="qr-code" />}
+                <form onSubmit={handleConfirmMfaSetup} className="compact-form">
+                  <input 
+                    type="text" 
+                    placeholder="6-cijferige code" 
+                    value={mfaSetupCode}
+                    onChange={(e) => setMfaSetupCode(e.target.value.replace(/\D/g, ''))}
+                    maxLength="6"
+                  />
+                  <button type="submit" className="btn btn-accent" disabled={isMfaLoading}>Bevestigen</button>
+                </form>
+              </div>
+            )}
+
+            {mfaEnabled && (
+              <form onSubmit={handleDisableMfa} className="compact-form">
+                <input 
+                  type="text" 
+                  placeholder="6-cijferige code" 
+                  value={mfaDisableCode}
+                  onChange={(e) => setMfaDisableCode(e.target.value.replace(/\D/g, ''))}
+                  maxLength="6"
+                />
+                <button type="submit" className="btn btn-outline" disabled={isMfaLoading}>MFA Uitschakelen</button>
+              </form>
+            )}
+            {mfaMessage && <p className="mfa-info-text">{mfaMessage}</p>}
+          </div>
+        </section>
+
+        {/* Danger Zone */}
+        <section className="bento-card danger-card">
+          <div className="card-header">
+            <div className="icon-circle danger">⚠️</div>
+            <h2>Gevaarlijke Zone</h2>
+          </div>
+          <div className="card-content">
+            <p>Het verwijderen van je account is onomkeerbaar. Al je gegevens, inschrijvingen en voortgang gaan verloren.</p>
+            
+            {!showDeleteConfirm ? (
+              <button className="btn btn-danger btn-full" onClick={() => setShowDeleteConfirm(true)}>
+                Account Verwijderen
               </button>
-            </form>
-          )}
-
-          {mfaMessage && <p className="mfa-message">{mfaMessage}</p>}
-        </article>
+            ) : (
+              <div className="confirm-box">
+                <p className="confirm-text">Weet je het zeker? Dit kan niet ongedaan worden gemaakt.</p>
+                <div className="btn-group">
+                  <button className="btn btn-danger" onClick={handleDeleteAccount} disabled={isDeleting}>
+                    {isDeleting ? 'Verwijderen...' : 'Ja, verwijder definitief'}
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                    Annuleren
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   );
 };
 

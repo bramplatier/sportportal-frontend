@@ -1,156 +1,255 @@
-.account-wrap {
-  max-width: 960px;
+.account-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem 2.8rem;
-  animation: rise-fade 0.45s ease both;
 }
 
-.account-header h1 {
-  margin: 0;
-  font-size: clamp(1.5rem, 3.2vw, 2.15rem);
-  color: #0b2a43;
+.account-hero {
+  margin-bottom: 3rem;
+  padding: 3rem 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.account-header p {
-  margin-top: 0.45rem;
-  color: #40607d;
+.badge {
+  background: var(--color-brand);
+  color: #000;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 1rem;
 }
 
-.account-note {
-  margin-top: 0.45rem;
-  color: #3d5e7a;
-  font-size: 0.9rem;
+.account-hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.account-error {
-  margin-top: 0.4rem;
-  color: #9f1239;
-  font-weight: 700;
-  font-size: 0.9rem;
+.subtitle {
+  color: var(--color-muted);
+  font-size: 1.2rem;
 }
 
-.account-grid {
-  margin-top: 1rem;
+.account-bento {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 4rem;
 }
 
-.account-card {
-  background: #ffffff;
-  border: 1px solid #d5e1eb;
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  padding: 1rem;
+.bento-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-.account-card h2 {
-  margin: 0 0 0.85rem;
-  font-size: 1rem;
-  color: #163751;
+.bento-card:hover {
+  border-color: var(--color-brand);
+  transform: translateY(-4px);
 }
 
-.account-card ul {
-  margin: 0;
-  padding-left: 1rem;
-  display: grid;
-  gap: 0.5rem;
-  color: #395876;
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.category-list {
-  display: grid;
-  gap: 0.7rem;
+.icon-circle {
+  width: 48px;
+  height: 48px;
+  background: rgba(204, 255, 0, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
 }
 
-.category-item {
+.icon-circle.danger {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.card-content {
+  flex-grow: 1;
+}
+
+/* Info Rows */
+.info-row {
   display: flex;
   justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  color: var(--color-muted);
+}
+
+.role-badge {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--color-accent);
+  padding: 0.1rem 0.6rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+/* Sport Chips */
+.sport-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sport-chip {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  padding: 0.6rem 1rem;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  gap: 0.7rem;
-  border: 1px solid #dce7ef;
-  border-radius: 12px;
-  padding: 0.65rem 0.75rem;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
 }
 
-.category-item span {
-  color: #15354f;
+.sport-chip:hover {
+  border-color: var(--color-brand);
+  background: rgba(204, 255, 0, 0.05);
+}
+
+.sport-chip.active {
+  background: var(--color-brand);
+  color: #000;
+  border-color: var(--color-brand);
   font-weight: 700;
 }
 
-.category-item button {
-  border: 1px solid #1f5b80;
-  background: #ffffff;
-  color: #1a4f72;
-  border-radius: 10px;
-  padding: 0.4rem 0.7rem;
+.chip-status {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* MFA & Buttons */
+.mfa-status-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot.enabled { background: var(--color-brand); box-shadow: 0 0 10px var(--color-brand); }
+.status-dot.disabled { background: var(--color-muted); }
+
+.btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
 }
 
-.category-empty {
-  color: #58748d;
+.btn-full { width: 100%; }
+
+.btn-primary { background: var(--color-brand); color: #000; }
+.btn-primary:hover { background: var(--color-brand-strong); transform: scale(1.02); }
+
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+
+.btn-outline { 
+  background: transparent; 
+  border: 1px solid var(--color-border); 
+  color: var(--color-ink); 
+}
+.btn-outline:hover { border-color: var(--color-ink); }
+
+.btn-accent { background: var(--color-accent); color: #000; }
+
+.compact-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.compact-form input {
+  flex-grow: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+}
+
+.qr-code {
+  width: 150px;
+  height: 150px;
+  margin: 1rem auto;
+  display: block;
+  border: 4px solid #fff;
+  border-radius: 8px;
+}
+
+.mfa-info-text {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-top: 1rem;
+}
+
+/* Danger Zone Extra */
+.confirm-box {
+  background: var(--color-danger-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  margin-top: 1rem;
+  border: 1px solid var(--color-danger-text);
+}
+
+.confirm-text {
+  color: var(--color-danger-text);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
   font-weight: 600;
-  margin: 0.2rem 0 0;
 }
 
-.account-card button {
-  border: 1px solid #1f5b80;
-  background: #ffffff;
-  color: #1a4f72;
-  border-radius: 10px;
-  padding: 0.55rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
+.alert-error { background: var(--color-danger-bg); color: var(--color-danger-text); border: 1px solid var(--color-danger-text); }
+.alert-success { background: rgba(204, 255, 0, 0.1); color: var(--color-brand); border: 1px solid var(--color-brand); }
 
-.mfa-card {
-  grid-column: 1 / -1;
-}
-
-.mfa-state {
-  margin: 0.2rem 0 0.85rem;
-  color: #3b5a76;
-}
-
-.mfa-form {
-  display: grid;
-  gap: 0.6rem;
-  max-width: 420px;
-}
-
-.mfa-form label {
-  color: #1d4360;
-  font-weight: 700;
-}
-
-.mfa-form input {
-  border: 1px solid #bfd4e3;
-  border-radius: 10px;
-  padding: 0.65rem 0.7rem;
-  font: inherit;
-}
-
-.mfa-qr {
-  width: 176px;
-  height: 176px;
-  border-radius: 10px;
-  border: 1px solid #d5e1eb;
-}
-
-.mfa-text-break {
-  overflow-wrap: anywhere;
-  color: #3b5a76;
-}
-
-.mfa-message {
-  margin-top: 0.7rem;
-  color: #1b4f74;
-  font-weight: 700;
-}
-
-@media (max-width: 780px) {
-  .account-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 768px) {
+  .account-hero h1 { font-size: 2.5rem; }
+  .account-bento { grid-template-columns: 1fr; }
 }

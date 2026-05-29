@@ -207,6 +207,7 @@ export const authApi = {
 
 export const customerApi = {
   getProfile: () => request('/api/customer/profile'),
+  deleteAccount: () => request('/api/customer/account', { method: 'DELETE' }),
   getCategories: () => request('/api/customer/categories'),
   setCategoryMembership: ({ categoryId, joined }) => request(`/api/customer/categories/${categoryId}`, {
     method: 'PATCH',
