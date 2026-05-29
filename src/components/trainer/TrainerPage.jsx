@@ -588,6 +588,5 @@ const TrainerPage = () => {
     </section>
   );
 };
-};
 
 export default TrainerPage;
