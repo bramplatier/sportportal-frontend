@@ -1,35 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authApi } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import './LoginForm.css';
 
-const EyeIcon = ({ closed = false }) => {
-  if (closed) {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M3 3l18 18" />
-        <path d="M10.6 10.6a2 2 0 002.8 2.8" />
-        <path d="M9.1 5.1A10.6 10.6 0 0112 4c6.5 0 10 8 10 8a17.3 17.3 0 01-4 5.3" />
-        <path d="M6.2 6.2A17.6 17.6 0 002 12s3.5 8 10 8a10.8 10.8 0 005.8-1.7" />
-      </svg>
-    );
-  }
+const EyeIcon = ({ closed = false }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    {closed ? (
+      <>
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+      </>
+    ) : (
+      <>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    )}
+  </svg>
+);
 
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M2 12s3.5-8 10-8 10 8 10 8-3.5 8-10 8-10-8-10-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-};
-
-const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
-  usePageTitle('Inloggen');
+const LoginForm = () => {
+  usePageTitle('Login');
   const navigate = useNavigate();
   const location = useLocation();
-  const { fetchUser, loginWithGoogle } = useAuth();
+  const { fetchUser, loginWithGoogle, loginWithPasskey } = useAuth();
+  
+  const [loginType, setLoginType] = useState('sporter'); // 'sporter', 'trainer', 'admin'
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,91 +36,32 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
   const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const getSafeTargetPath = () => {
-    const next = new URLSearchParams(location.search).get('next');
-    if (next && next.startsWith('/') && !next.startsWith('//')) {
-      return next;
-    }
-    return successPath;
-  };
-  const targetPath = getSafeTargetPath();
-  const isAdminLogin = requiredRole === 'admin';
-  const title = requiredRole === 'admin' ? 'Admin Login' : 'SportPortal';
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const challenge = params.get('challenge') || params.get('mfa_challenge');
-    const urlError = params.get('error');
-
+    const challenge = params.get('challenge');
     if (challenge) {
       setChallengeToken(challenge);
+      setLoginType('trainer');
       setStep(2);
-    }
-
-    if (urlError === 'google_failed') {
-      setError('Google login mislukt. Probeer het opnieuw.');
     }
   }, [location.search]);
 
-  const fallingLines = Array.from({ length: 14 }, (_, index) => ({
-    id: index,
-    left: `${(index + 1) * 7}%`,
-    delay: `${(index % 7) * 0.6}s`,
-    duration: `${6 + (index % 4) * 1.2}s`,
-  }));
-
-  const isMfaRequired = (result) => Boolean(
-    result?.mfaRequired
-    || result?.mfa_required
-    || result?.requiresMfa
-    || result?.requires_mfa
-    || result?.status === 'MFA_REQUIRED'
-  );
-
-  const getChallengeTokenFromResponse = (result) => (
-    result?.challengeToken
-    || result?.challenge_token
-    || result?.mfaChallengeToken
-    || result?.mfa_challenge_token
-    || result?.challenge?.token
-    || ''
-  );
-
-  const handleLogin = async (e) => {
+  const handleTrainerLogin = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    const normalizedEmail = email.trim().toLowerCase();
-    const cleanedPassword = password.trim();
-
     try {
-      if (!normalizedEmail || !cleanedPassword) {
-        setError('Vul alle verplichte velden in.');
-        return;
-      }
-
-      const result = await authApi.login({
-        email: normalizedEmail,
-        password: cleanedPassword,
-      });
-
-      if (isMfaRequired(result)) {
-        const mfaChallengeToken = getChallengeTokenFromResponse(result);
-
-        if (!mfaChallengeToken) {
-          setError('MFA challenge ontbreekt in server response.');
-          return;
-        }
-
-        setChallengeToken(mfaChallengeToken);
+      const result = await authApi.login({ email, password });
+      if (result.mfaRequired || result.mfa_required) {
+        setChallengeToken(result.challengeToken || result.challenge_token);
         setStep(2);
-        return;
+      } else {
+        await fetchUser();
+        navigate('/dashboard');
       }
-
-      await fetchUser();
-      navigate(targetPath);
     } catch (err) {
-      setError(err?.message || 'Inloggen mislukt. Controleer je e-mailadres en wachtwoord.');
+      setError(err?.message || 'Login mislukt.');
     } finally {
       setIsLoading(false);
     }
@@ -130,165 +69,118 @@ const LoginForm = ({ requiredRole = null, successPath = '/dashboard' }) => {
 
   const handleMFA = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
-
     try {
-      if (mfaCode.length !== 6) {
-        setError('Ongeldige MFA code.');
-        return;
-      }
-
-      if (!challengeToken) {
-        setError('MFA sessie is verlopen. Log opnieuw in.');
-        setStep(1);
-        return;
-      }
-
-      await authApi.verifyMfa({
-        challengeToken,
-        otp: mfaCode,
-      });
-
+      await authApi.verifyMfa({ challengeToken, otp: mfaCode });
       await fetchUser();
-      navigate(targetPath);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err?.message || 'MFA verificatie mislukt. Probeer het opnieuw.');
+      setError('MFA code onjuist.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className={`login-container ${isAdminLogin ? 'admin-login' : ''}`}>
-      <div className="falling-lines" aria-hidden="true">
-        {fallingLines.map((line) => (
-          <span
-            key={line.id}
-            className="line"
-            style={{
-              left: line.left,
-              animationDelay: line.delay,
-              animationDuration: line.duration,
-            }}
-          />
-        ))}
-      </div>
-      <div className="login-box">
-        {isAdminLogin && <div className="admin-badge">Restricted Access</div>}
-        <h2 className="login-title">{title}</h2>
-        <p className="login-subtitle">
-          {isAdminLogin
-            ? 'Alleen voor beheerders. Activiteit wordt gelogd en beveiligd met MFA.'
-            : 'Log in op je account en ga verder waar je gebleven was.'}
-        </p>
-        {error && (
-          <div className="login-error" role="alert" aria-live="assertive">
-            {error}
-          </div>
-        )}
+  const handleAdminPasskey = async (e) => {
+    e.preventDefault();
+    if (!email) { setError('Voer eerst je e-mailadres in.'); return; }
+    setIsLoading(true);
+    setError('');
+    try {
+      await loginWithPasskey(email);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Passkey verificatie mislukt. Gebruik een geregistreerde Passkey.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        {step === 1 ? (
-          <form onSubmit={handleLogin} className="login-form" aria-busy={isLoading}>
-            {!isAdminLogin && (
-              <button 
-                type="button" 
-                className="btn-secondary" 
-                onClick={loginWithGoogle} 
-                style={{ width: '100%', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                Inloggen met Google
-              </button>
-            )}
-            <div className="form-group">
-              <label htmlFor="email">E-mailadres</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder={isAdminLogin ? 'admin@voorbeeld.nl' : 'sporter@voorbeeld.nl'}
-                aria-invalid={Boolean(error)}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Wachtwoord</label>
-              <div className="password-field">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  minLength={8}
-                  aria-invalid={Boolean(error)}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Verberg wachtwoord' : 'Toon wachtwoord'}
-                  aria-pressed={showPassword}
-                >
-                  <EyeIcon closed={showPassword} />
-                </button>
-              </div>
-            </div>
-            <button type="submit" className="btn-primary" disabled={isLoading}>
-              {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}
+  const fallingLines = Array.from({ length: 10 }, (_, i) => ({ id: i, left: `${i * 10}%`, delay: `${i * 0.5}s` }));
+
+  return (
+    <div className="login-container">
+      <div className="falling-lines">
+        {fallingLines.map(l => <span key={l.id} className="line" style={{left: l.left, animationDelay: l.delay}} />)}
+      </div>
+
+      <div className="login-box">
+        <header className="login-nav">
+          <button className={loginType === 'sporter' ? 'active' : ''} onClick={() => {setLoginType('sporter'); setStep(1); setError('');}}>Sporter</button>
+          <button className={loginType === 'trainer' ? 'active' : ''} onClick={() => {setLoginType('trainer'); setStep(1); setError('');}}>Trainer</button>
+          <button className={loginType === 'admin' ? 'active' : ''} onClick={() => {setLoginType('admin'); setStep(1); setError('');}}>Admin</button>
+        </header>
+
+        <h2 className="login-title">
+          {loginType === 'sporter' && 'Welkom'}
+          {loginType === 'trainer' && 'Trainer Portal'}
+          {loginType === 'admin' && 'Admin Vault'}
+        </h2>
+        <p className="login-subtitle">
+          {loginType === 'sporter' && 'Log in met je Google account om te sporten.'}
+          {loginType === 'trainer' && 'Gebruik je wachtwoord en MFA code.'}
+          {loginType === 'admin' && 'Beveiligde toegang via Passkey.'}
+        </p>
+
+        {error && <div className="login-error">{error}</div>}
+
+        <div className="login-body">
+          {loginType === 'sporter' && (
+            <button className="btn btn-primary btn-full google-btn" onClick={loginWithGoogle}>
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" />
+              Inloggen met Google
             </button>
-            {requiredRole ? (
-              <div className="auth-link">
-                <Link to="/login">Naar normale login</Link>
+          )}
+
+          {loginType === 'trainer' && step === 1 && (
+            <form onSubmit={handleTrainerLogin} className="login-form">
+              <div className="form-group">
+                <label>E-mailadres</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
-            ) : (
-              /* Registratie is tijdelijk uitgeschakeld */
-              null
-            )}
-          </form>
-        ) : (
-          <form onSubmit={handleMFA} className="login-form" aria-busy={isLoading}>
-            <p className="mfa-instructions">
-              Voer de 6-cijferige code in vanuit je authenticator app.
-            </p>
-            <div className="form-group">
-              <label htmlFor="mfaCode">Authenticatie Code</label>
-              <input
-                type="text"
-                id="mfaCode"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))} // Filter non-digits
-                required
-                maxLength="6"
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                placeholder="123456"
-                pattern="[0-9]{6}"
-                aria-invalid={Boolean(error)}
-              />
-            </div>
-            <div className="mfa-actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => {
-                  setStep(1);
-                  setChallengeToken('');
-                  setMfaCode('');
-                }}
-              >
-                Terug
+              <div className="form-group">
+                <label>Wachtwoord</label>
+                <div className="password-field">
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required />
+                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                    <EyeIcon closed={showPassword} />
+                  </button>
+                </div>
+              </div>
+              <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+                {isLoading ? 'Laden...' : 'Inloggen'}
               </button>
-              <button type="submit" className="btn-primary" disabled={isLoading}>
-                {isLoading ? 'Verifiëren...' : 'Bevestig Code'}
+            </form>
+          )}
+
+          {loginType === 'trainer' && step === 2 && (
+            <form onSubmit={handleMFA} className="login-form">
+              <div className="form-group">
+                <label>MFA Code</label>
+                <input type="text" placeholder="6 cijfers" value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))} maxLength="6" required />
+              </div>
+              <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+                {isLoading ? 'Verifiëren...' : 'Bevestigen'}
               </button>
-            </div>
-          </form>
-        )}
+              <button type="button" className="btn btn-outline btn-full" style={{marginTop: '0.5rem'}} onClick={() => setStep(1)}>Terug</button>
+            </form>
+          )}
+
+          {loginType === 'admin' && (
+            <form onSubmit={handleAdminPasskey} className="login-form">
+              <div className="form-group">
+                <label>Admin E-mail</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+              </div>
+              <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+                {isLoading ? 'Biometrische scan...' : 'Gebruik Passkey'}
+              </button>
+              <p style={{fontSize: '0.8rem', color: 'var(--color-muted)', textAlign: 'center', marginTop: '1rem'}}>
+                Nog geen Passkey? Log eerst in via Trainer en stel deze in bij Admin.
+              </p>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

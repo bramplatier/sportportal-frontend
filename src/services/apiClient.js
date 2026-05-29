@@ -210,6 +210,20 @@ export const authApi = {
     method: 'POST',
     body: JSON.stringify({ otp }),
   }),
+  // Passkey (WebAuthn) methods
+  getPasskeyRegisterOptions: () => request('/api/auth/passkey/register/options', { method: 'POST' }),
+  verifyPasskeyRegister: (body) => request('/api/auth/passkey/register/verify', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  getPasskeyLoginOptions: ({ email }) => request('/api/auth/passkey/login/options', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }),
+  verifyPasskeyLogin: ({ email, body }) => request('/api/auth/passkey/login/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, body }),
+  }),
 };
 
 export const customerApi = {

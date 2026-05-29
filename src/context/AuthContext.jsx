@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { authApi } from '../services/apiClient';
 import { normalizeRole } from '../utils/auth';
 
@@ -37,6 +38,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithPasskey = async (email) => {
+    try {
+      const options = await authApi.getPasskeyLoginOptions({ email });
+      const authResponse = await startAuthentication(options);
+      await authApi.verifyPasskeyLogin({ email, body: authResponse });
+      await fetchUser();
+      return true;
+    } catch (err) {
+      console.error('Passkey login failed', err);
+      throw err;
+    }
+  };
+
   const logout = async () => {
     try {
       await authApi.logout();
@@ -47,7 +61,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, fetchUser, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, fetchUser, loginWithGoogle, loginWithPasskey, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,7 +11,7 @@
 .login-box {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  padding: 3rem;
+  padding: 2.5rem;
   border-radius: var(--radius-lg);
   width: min(450px, 100%);
   position: relative;
@@ -19,8 +19,37 @@
   box-shadow: var(--shadow-soft);
 }
 
+.login-nav {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.3rem;
+  border-radius: 99px;
+  margin-bottom: 2rem;
+}
+
+.login-nav button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  padding: 0.5rem;
+  border-radius: 99px;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-nav button.active {
+  background: var(--color-brand);
+  color: #000;
+}
+
 .login-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   color: var(--color-brand);
   margin-bottom: 0.5rem;
   text-align: center;
@@ -29,12 +58,26 @@
 .login-subtitle {
   color: var(--color-muted);
   text-align: center;
-  margin-bottom: 2.5rem;
-  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #000;
+  border: none;
+}
+
+.google-btn:hover {
+  background: #f1f1f1;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .form-group label {
@@ -42,28 +85,26 @@
   font-weight: 800;
   font-family: var(--font-heading);
   text-transform: uppercase;
-  font-size: 0.85rem;
-  margin-bottom: 0.75rem;
-  color: var(--color-brand); /* Neon Lime voor betere leesbaarheid op donker */
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-brand);
   letter-spacing: 0.05em;
 }
 
 .form-group input {
   width: 100%;
-  background: rgba(15, 23, 42, 0.6);
-  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   color: #fff;
-  padding: 1rem 1.25rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
-  transition: all 0.2s ease;
 }
 
 .form-group input:focus {
   border-color: var(--color-brand);
-  background: rgba(15, 23, 42, 0.9);
   outline: none;
-  box-shadow: 0 0 15px rgba(204, 255, 0, 0.15);
+  box-shadow: 0 0 10px rgba(204, 255, 0, 0.1);
 }
 
 .password-field {
@@ -87,21 +128,18 @@
   width: 20px;
   height: 20px;
   stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
 }
 
 .login-error {
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   border: 1px solid var(--color-danger-text);
 }
 
-/* Falling lines animation background */
 .falling-lines {
   position: absolute;
   top: 0;
@@ -117,8 +155,8 @@
   width: 1px;
   height: 100px;
   background: linear-gradient(to bottom, transparent, var(--color-brand));
-  opacity: 0.1;
-  animation: fall linear infinite;
+  opacity: 0.05;
+  animation: fall 5s linear infinite;
 }
 
 @keyframes fall {
@@ -126,6 +164,6 @@
 }
 
 @media (max-width: 480px) {
-  .login-box { padding: 2rem; }
-  .login-title { font-size: 2rem; }
+  .login-box { padding: 1.5rem; }
+  .login-title { font-size: 1.75rem; }
 }
