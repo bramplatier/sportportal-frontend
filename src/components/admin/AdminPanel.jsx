@@ -4,6 +4,7 @@ import { startRegistration } from '@simplewebauthn/browser';
 import { API_BASE_URL, adminApi, authApi } from '../../services/apiClient';
 import { normalizeRole } from '../../utils/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useAuth } from '../../context/AuthContext';
 import useMacVerification from '../../hooks/useMacVerification';
 import MacManagement from './MacManagement';
 import Modal from '../ui/Modal';
@@ -21,6 +22,7 @@ const STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
 
 const AdminPanel = () => {
   usePageTitle('Admin Control Center');
+  const { user } = useAuth();
   const [overview, setOverview] = useState(EMPTY_OVERVIEW);
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
