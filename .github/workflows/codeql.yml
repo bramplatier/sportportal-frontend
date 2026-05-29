@@ -90,23 +90,23 @@ jobs:
           npm run build
       - name: Deploy to App Directory
         run: |
-          # Maak de doelmap aan als deze niet bestaat
-          sudo mkdir -p /home/pindakaas/sportportal
+          # Gebruik geen sudo voor mappen in de home directory om wachtwoordvragen te voorkomen
+          mkdir -p /home/pindakaas/sportportal
           
           # Verwijder oude dist en kopieer nieuwe
-          sudo rm -rf /home/pindakaas/sportportal/dist
-          sudo cp -rf dist /home/pindakaas/sportportal/
+          rm -rf /home/pindakaas/sportportal/dist
+          cp -rf dist /home/pindakaas/sportportal/
           
           # Kopieer essentiële bestanden
-          sudo cp package.json server.js /home/pindakaas/sportportal/
+          cp package.json server.js /home/pindakaas/sportportal/
           
           # Installeer dependencies in de doelmap
           cd /home/pindakaas/sportportal
-          sudo npm install --production --no-save
+          npm install --production --no-save
           
-          # Zet de rechten goed voor de pindakaas gebruiker
-          sudo chown -R pindakaas:pindakaas /home/pindakaas/sportportal
       - name: Restart Systemd Service
         run: |
+          # Voor systemctl is sudo nodig. 
+          # Zorg dat de runner-gebruiker NOPASSWD rechten heeft in /etc/sudoers voor dit commando.
           sudo systemctl daemon-reload
-          sudo systemctl restart sportportal.service || (journalctl -u sportportal.service -n 50 && exit 1)
+          sudo systemctl restart sportportal.service || (sudo journalctl -u sportportal.service -n 50 && exit 1)
