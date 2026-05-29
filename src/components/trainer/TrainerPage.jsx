@@ -342,12 +342,43 @@ const TrainerPage = () => {
     });
   };
 
+  const removeParticipant = async (sessionId, participantName) => {
+    if (!window.confirm(`Weet je zeker dat je ${participantName} wilt verwijderen uit deze training?`)) return;
+
+    try {
+      await trainerApi.removeParticipant({ sessionId, participantName });
+      setSessions((prev) => prev.map((s) => {
+        if (s.id !== sessionId) return s;
+        return {
+          ...s,
+          participants: s.participants.filter(p => p !== participantName)
+        };
+      }));
+    } catch (err) {
+      setError('Deelnemer kon niet worden verwijderd.');
+    }
+  };
+
+  const deleteSession = async (sessionId) => {
+    if (!window.confirm('Weet je zeker dat je deze training volledig wilt verwijderen?')) return;
+
+    try {
+      await trainerApi.deleteSession({ sessionId });
+      setSessions((prev) => prev.filter(s => s.id !== sessionId));
+      if (selectedSessionId === sessionId) {
+        setSelectedSessionId('');
+      }
+    } catch (err) {
+      setError('Training kon niet worden verwijderd.');
+    }
+  };
+
   return (
     <section className="trainer-wrap">
       <header className="trainer-header">
         <h1>Trainer Dashboard</h1>
         <p>Beheer trainingen, bekijk deelnemers en beheer voting polls.</p>
-        {!isLiveMode && !isLoading && <p className="trainer-note">Live backend data is momenteel niet bereikbaar.</p>}
+        {!isLiveMode && !isLoading && <p className="trainer-error">Live backend data is momenteel niet bereikbaar.</p>}
         {error && <p className="trainer-error" role="alert">{error}</p>}
       </header>
 
@@ -355,8 +386,8 @@ const TrainerPage = () => {
         <aside className="trainer-card">
           <div className="title-row">
             <h2>Mijn trainingen</h2>
-            <button type="button" disabled={isSavingSession} onClick={addSession}>
-              {isSavingSession ? 'Opslaan...' : '+ Training'}
+            <button type="button" className="btn btn-primary" disabled={isSavingSession} onClick={addSession}>
+              {isSavingSession ? 'Opslaan...' : '+ Nieuw'}
             </button>
           </div>
 
@@ -372,64 +403,79 @@ const TrainerPage = () => {
                 }}
               >
                 <strong>{session.title}</strong>
-                <span>{session.time || session.date || 'Tijd onbekend'} • {session.location || 'Locatie onbekend'}</span>
-                <span className="session-trainer">Trainer: {session.trainerName || 'Onbekend'}</span>
+                <span>{session.time || session.date || 'Tijd onbekend'}</span>
+                <span>📍 {session.location || 'Locatie onbekend'}</span>
               </button>
             ))}
           </div>
         </aside>
 
         <article className="trainer-card">
-          <h2>Training Beheer</h2>
-          <p className="session-meta">
-            {selectedSession
-              ? `${selectedSession.title} • ${selectedSession.time || selectedSession.date || 'Tijd onbekend'} • ${selectedSession.location || 'Locatie onbekend'} • Trainer: ${selectedSession.trainerName || 'Onbekend'}`
-              : 'Geen training geselecteerd'}
-          </p>
+          <div className="title-row">
+            <h2>Details & Deelnemers</h2>
+            {selectedSession && (
+              <button type="button" className="btn btn-danger" onClick={() => deleteSession(selectedSession.id)}>
+                Verwijder Training
+              </button>
+            )}
+          </div>
 
           {selectedSession && (
             <form className="trainer-session-form" onSubmit={saveSessionDetails}>
-              <label htmlFor="sessionTitle">Titel</label>
-              <input
-                id="sessionTitle"
-                type="text"
-                value={sessionForm.title}
-                onChange={(event) => setSessionForm((prev) => ({ ...prev, title: event.target.value }))}
-                placeholder="Naam van de training"
-                required
-              />
+              <div>
+                <label htmlFor="sessionTitle">Titel</label>
+                <input
+                  id="sessionTitle"
+                  type="text"
+                  value={sessionForm.title}
+                  onChange={(event) => setSessionForm((prev) => ({ ...prev, title: event.target.value }))}
+                  required
+                />
+              </div>
 
-              <label htmlFor="sessionDate">Datum / Tijd</label>
-              <input
-                id="sessionDate"
-                type="datetime-local"
-                value={sessionForm.date}
-                onChange={(event) => setSessionForm((prev) => ({ ...prev, date: event.target.value }))}
-                required
-              />
+              <div>
+                <label htmlFor="sessionDate">Datum / Tijd</label>
+                <input
+                  id="sessionDate"
+                  type="datetime-local"
+                  value={sessionForm.date}
+                  onChange={(event) => setSessionForm((prev) => ({ ...prev, date: event.target.value }))}
+                  required
+                />
+              </div>
 
-              <label htmlFor="sessionLocation">Locatie</label>
-              <input
-                id="sessionLocation"
-                type="text"
-                value={sessionForm.location}
-                onChange={(event) => setSessionForm((prev) => ({ ...prev, location: event.target.value }))}
-                placeholder="Bijv. Studio 2"
-                required
-              />
+              <div>
+                <label htmlFor="sessionLocation">Locatie</label>
+                <input
+                  id="sessionLocation"
+                  type="text"
+                  value={sessionForm.location}
+                  onChange={(event) => setSessionForm((prev) => ({ ...prev, location: event.target.value }))}
+                  required
+                />
+              </div>
 
-              <button type="submit">Training opslaan</button>
+              <button type="submit" className="btn btn-accent">Wijzigingen Opslaan</button>
             </form>
           )}
 
-          <h2 className="participants-title">Deelnemerslijst</h2>
+          <h3 className="participants-title">Deelnemers ({selectedSession?.participants.length || 0})</h3>
 
           {isLoading ? (
             <p className="empty">Deelnemers laden...</p>
           ) : selectedSession && selectedSession.participants.length > 0 ? (
             <ul className="participants">
               {selectedSession.participants.map((name) => (
-                <li key={name}>{name}</li>
+                <li key={name} className="participant-item">
+                  <strong>{name}</strong>
+                  <button 
+                    className="remove-btn" 
+                    onClick={() => removeParticipant(selectedSession.id, name)}
+                    title="Verwijder uit training"
+                  >
+                    ×
+                  </button>
+                </li>
               ))}
             </ul>
           ) : (
@@ -438,54 +484,49 @@ const TrainerPage = () => {
         </article>
       </div>
 
-      <section className="trainer-voting-grid" aria-label="Trainer voting beheer">
+      <section className="trainer-voting-grid">
         <article className="trainer-card">
-          <h2>Nieuwe Poll</h2>
+          <h2>Poll Aanmaken</h2>
           <form className="trainer-session-form" onSubmit={createPoll}>
-            <label htmlFor="pollTitle">Titel</label>
-            <input
-              id="pollTitle"
-              type="text"
-              value={pollForm.title}
-              onChange={(event) => setPollForm((prev) => ({ ...prev, title: event.target.value }))}
-              placeholder="Bijv. Activiteit van de week"
-              required
-            />
+            <div>
+              <label htmlFor="pollTitle">Titel</label>
+              <input
+                id="pollTitle"
+                type="text"
+                value={pollForm.title}
+                onChange={(event) => setPollForm((prev) => ({ ...prev, title: event.target.value }))}
+                required
+              />
+            </div>
 
-            <label htmlFor="pollDescription">Beschrijving</label>
-            <input
-              id="pollDescription"
-              type="text"
-              value={pollForm.description}
-              onChange={(event) => setPollForm((prev) => ({ ...prev, description: event.target.value }))}
-              placeholder="Optionele toelichting"
-            />
+            <div>
+              <label htmlFor="pollClosesAt">Sluit op</label>
+              <input
+                id="pollClosesAt"
+                type="datetime-local"
+                value={pollForm.closesAt}
+                onChange={(event) => setPollForm((prev) => ({ ...prev, closesAt: event.target.value }))}
+              />
+            </div>
 
-            <label htmlFor="pollClosesAt">Sluit op</label>
-            <input
-              id="pollClosesAt"
-              type="datetime-local"
-              value={pollForm.closesAt}
-              onChange={(event) => setPollForm((prev) => ({ ...prev, closesAt: event.target.value }))}
-            />
+            <div>
+              <label htmlFor="pollOptions">Opties (1 per regel)</label>
+              <textarea
+                id="pollOptions"
+                value={pollForm.optionsText}
+                onChange={(event) => setPollForm((prev) => ({ ...prev, optionsText: event.target.value }))}
+                required
+              />
+            </div>
 
-            <label htmlFor="pollOptions">Opties (1 per regel)</label>
-            <textarea
-              id="pollOptions"
-              value={pollForm.optionsText}
-              onChange={(event) => setPollForm((prev) => ({ ...prev, optionsText: event.target.value }))}
-              placeholder={'Zaalvoetbal\nPadel Mix\nBootcamp'}
-              required
-            />
-
-            <button type="submit" disabled={isSavingPoll}>
+            <button type="submit" className="btn btn-primary" disabled={isSavingPoll}>
               {isSavingPoll ? 'Aanmaken...' : 'Poll aanmaken'}
             </button>
           </form>
         </article>
 
         <article className="trainer-card">
-          <h2>Poll Stemmers</h2>
+          <h2>Poll Beheer</h2>
 
           <div className="poll-picker">
             <label htmlFor="pollSelect">Kies poll</label>
@@ -505,30 +546,26 @@ const TrainerPage = () => {
             <div className="poll-summary">
               <p>
                 <strong>{selectedPoll.title}</strong>
-                {selectedPoll.isActive && <span className="poll-active-badge">Actieve stempagina poll</span>}
+                {selectedPoll.isActive && <span className="poll-active-badge">ACTIEF</span>}
               </p>
-              {selectedPoll.closesAt && <p>Deadline: {selectedPoll.closesAt}</p>}
-              <p>Totaal stemmen: {selectedPoll.totalVotes}</p>
-              <button
-                type="button"
-                className="poll-primary-btn"
-                disabled={isActivatingPoll || selectedPoll.isActive}
-                onClick={activateSelectedPoll}
-              >
-                {selectedPoll.isActive
-                  ? 'Deze poll is actief'
-                  : isActivatingPoll
-                    ? 'Activeren...'
-                    : 'Zet als actieve stempoll'}
-              </button>
-              <button
-                type="button"
-                className="poll-danger-btn"
-                disabled={isDeletingPoll}
-                onClick={deleteSelectedPoll}
-              >
-                {isDeletingPoll ? 'Verwijderen...' : 'Poll verwijderen'}
-              </button>
+              <div className="poll-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={isActivatingPoll || selectedPoll.isActive}
+                  onClick={activateSelectedPoll}
+                >
+                  {selectedPoll.isActive ? 'Actief' : 'Activeer'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={isDeletingPoll}
+                  onClick={deleteSelectedPoll}
+                >
+                  Verwijder
+                </button>
+              </div>
             </div>
           )}
 
@@ -537,19 +574,20 @@ const TrainerPage = () => {
           ) : pollVoters.length > 0 ? (
             <ul className="participants">
               {pollVoters.map((voter) => (
-                <li key={voter.id}>
+                <li key={voter.id} className="participant-item">
                   <strong>{voter.name}</strong>
-                  <span>{` -> ${voter.option}${voter.votedAt ? ` (${voter.votedAt})` : ''}`}</span>
+                  <span>{voter.option}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="empty">Nog geen stemmers voor deze poll.</p>
+            <p className="empty">Nog geen stemmers.</p>
           )}
         </article>
       </section>
     </section>
   );
+};
 };
 
 export default TrainerPage;
