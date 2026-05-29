@@ -143,7 +143,7 @@ const AdminPanel = () => {
     setError('');
     try {
       const options = await authApi.getPasskeyRegisterOptions();
-      const regResponse = await startRegistration(options);
+      const regResponse = await startRegistration({ optionsJSON: options });
       await authApi.verifyPasskeyRegister(regResponse);
       showSuccess('Passkey succesvol geregistreerd voor jouw account!');
     } catch (err) {

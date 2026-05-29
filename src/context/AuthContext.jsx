@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
   const loginWithPasskey = async (email) => {
     try {
       const options = await authApi.getPasskeyLoginOptions({ email });
-      const authResponse = await startAuthentication(options);
+      const authResponse = await startAuthentication({ optionsJSON: options });
       await authApi.verifyPasskeyLogin({ email, body: authResponse });
       await fetchUser();
       return true;
