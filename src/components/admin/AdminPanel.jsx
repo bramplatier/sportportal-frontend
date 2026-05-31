@@ -79,6 +79,10 @@ const AdminPanel = () => {
     setTimeout(() => setSuccess(''), 3000);
   };
 
+  const confirmAction = (type, data) => {
+    setModalConfig({ isOpen: true, type, data });
+  };
+
   const closeModal = () => {
     setModalConfig({ isOpen: false, type: '', data: null });
     setMfaSetupData(null);
