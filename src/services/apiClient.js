@@ -265,7 +265,7 @@ export const trainerApi = {
   }),
   getParticipants: ({ sessionId }) => request(`/api/trainer/sessions/${sessionId}/participants`),
   getPolls: () => request('/api/trainer/polls'),
-  createPoll: ({ payload }) => request('/api/trainer/polls', {
+  createPoll: (payload) => request('/api/trainer/polls', {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
