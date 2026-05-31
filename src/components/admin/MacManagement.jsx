@@ -10,7 +10,6 @@ const MacManagement = () => {
   const {
     macStatus,
     trustedMacs,
-    accessLog,
     policy,
     loading,
     error,
@@ -19,7 +18,6 @@ const MacManagement = () => {
     revokeMac,
     updatePolicy,
     validateMacFormat,
-    loadAccessLog,
   } = useMacVerification();
 
   const [macForm, setMacForm] = useState({
@@ -31,7 +29,6 @@ const MacManagement = () => {
   const [registrationSuccess, setRegistrationSuccess] = useState('');
   const [isRegisteringCurrent, setIsRegisteringCurrent] = useState(false);
   const [policySuccess, setPolicySuccess] = useState('');
-  const [logOffset, setLogOffset] = useState(0);
   const [expandedMacId, setExpandedMacId] = useState(null);
 
   const handleRegisterCurrent = async () => {
@@ -97,16 +94,6 @@ const MacManagement = () => {
       await updatePolicy({ [policyKey]: value });
       setPolicySuccess('Bijgewerkt! ✓');
       setTimeout(() => setPolicySuccess(''), 3000);
-    } catch (err) {
-      alert(`Fout: ${err.message}`);
-    }
-  };
-
-  const handleLoadMoreLogs = async () => {
-    const newOffset = logOffset + 50;
-    try {
-      await loadAccessLog(50, newOffset);
-      setLogOffset(newOffset);
     } catch (err) {
       alert(`Fout: ${err.message}`);
     }
@@ -240,40 +227,6 @@ const MacManagement = () => {
           </div>
         </section>
       </div>
-
-      {/* Access Log */}
-      <section className="admin-card mac-log-section">
-        <h3>Toegangslogboek</h3>
-        <div className="table-shell">
-          <table className="compact-table">
-            <thead>
-              <tr>
-                <th>Tijd</th>
-                <th>Apparaat / MAC</th>
-                <th>Status</th>
-                <th>IP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accessLog.map(log => (
-                <tr key={log.id}>
-                  <td>{new Date(log.created_at || log.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</td>
-                  <td><code>{log.mac_address || log.macAddress}</code></td>
-                  <td>
-                    <span className={`status-pill-mini ${(log.is_trusted || log.isTrusted) ? 'trusted' : 'untrusted'}`}>
-                      {(log.is_trusted || log.isTrusted) ? 'VERTROUWD' : 'ONBEKEND'}
-                    </span>
-                  </td>
-                  <td><code>{log.ip_address}</code></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {accessLog.length >= 50 && (
-            <button onClick={handleLoadMoreLogs} className="btn btn-outline btn-full" style={{marginTop:'1rem'}}>Laden meer...</button>
-          )}
-        </div>
-      </section>
     </div>
   );
 };
