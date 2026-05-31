@@ -66,22 +66,32 @@ const AdminPanel = () => {
         
         const currentStatus = status?.data || status;
         const me = meRes?.user || meRes;
+        
+        console.log('[DEBUG] AdminPanel loadInitial status:', currentStatus);
+        console.log('[DEBUG] AdminPanel loadInitial me:', me);
+        
         setHasPasskey(!!me?.hasPasskey);
 
         // If MAC is verified or not required, load the rest
         if (!currentStatus?.macVerificationRequired || currentStatus?.isVerified) {
-          const [o, u] = await Promise.all([
-            adminApi.getOverview(),
-            adminApi.getUsers(),
-          ]);
-          setOverview({ ...EMPTY_OVERVIEW, ...(o || {}) });
-          setUsers(Array.isArray(u) ? u : []);
+          try {
+            const [o, u] = await Promise.all([
+              adminApi.getOverview(),
+              adminApi.getUsers(),
+            ]);
+            setOverview({ ...EMPTY_OVERVIEW, ...(o || {}) });
+            setUsers(Array.isArray(u) ? u : []);
+          } catch (loadErr) {
+            console.error('[ERROR] Failed to load overview/users:', loadErr);
+            setError(`Systeemgegevens laden mislukt: ${loadErr.message || 'Server fout'}`);
+          }
         }
       } catch (err) {
+        console.error('[ERROR] Initial check failed:', err);
         if (err.message?.includes('MAC') || err.status === 403) {
           // Handled by registration UI
         } else {
-          setError('Data laden mislukt.');
+          setError(`Verbinding mislukt: ${err.message || 'Kan geen verbinding maken met de server'}`);
         }
       } finally {
         setIsLoading(false);
