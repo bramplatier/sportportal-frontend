@@ -171,7 +171,7 @@ const AdminPanel = () => {
       showSuccess('Gebruiker aangemaakt.');
       startMfaSetup(created);
     } catch (err) {
-      setError('Aanmaken mislukt.');
+      setError(err.message || 'Aanmaken mislukt.');
     }
   };
 

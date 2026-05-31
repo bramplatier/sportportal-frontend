@@ -13,7 +13,7 @@ const normalizeCategory = (category) => ({
 
 const AccountPage = () => {
   usePageTitle('Account');
-  const { user, logout } = useAuth();
+  const { user, logout, fetchUser } = useAuth();
   const navigate = useNavigate();
   
   const [categories, setCategories] = useState([]);
@@ -131,6 +131,7 @@ const AccountPage = () => {
       setMfaSetupData(null);
       setMfaSetupCode('');
       setMfaMessage('MFA is succesvol ingeschakeld.');
+      await fetchUser(); // Update global auth context
     } catch (err) {
       setMfaMessage(err?.message || 'Bevestiging mislukt.');
     } finally {
@@ -148,6 +149,7 @@ const AccountPage = () => {
       setMfaEnabled(false);
       setMfaDisableCode('');
       setMfaMessage('MFA is uitgeschakeld.');
+      await fetchUser(); // Update global auth context
     } catch (err) {
       setMfaMessage(err?.message || 'Uitschakelen mislukt.');
     } finally {

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { macApi } from '../services/apiClient';
-import MacAddressManager from '../services/macAddressManager';
 
 /**
  * Hook for managing MAC address verification
@@ -13,8 +12,6 @@ export const useMacVerification = () => {
   const [policy, setPolicy] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const macManager = new MacAddressManager('/api');
 
   /**
    * Check MAC verification status
