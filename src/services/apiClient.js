@@ -191,6 +191,7 @@ export const adminApi = {
 
 export const authApi = {
   me: () => request('/api/me', { _skipRetry: true }),
+  getMe: () => request('/api/me', { _skipRetry: true }),
   googleStart: () => window.location.assign('/api/auth/google/start?redirect=true'),
   refresh: () => request('/api/auth/refresh', { method: 'POST', _skipRetry: true }),
   logout: () => request('/api/auth/logout', { method: 'POST', _skipRetry: true }),
