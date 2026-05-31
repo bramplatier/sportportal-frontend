@@ -221,54 +221,74 @@ const TrainerPage = () => {
         </article>
       </div>
 
-      <section className="trainer-voting-grid">
-        <article className="trainer-card">
-          <h2>Poll Beheer</h2>
-          <div className="poll-picker">
+      <div className="trainer-voting-grid-header">
+        <h2 style={{fontSize: '1.5rem', color: 'var(--color-brand)', marginBottom: '1rem'}}>📊 Poll Beheer</h2>
+      </div>
+
+      <article className="trainer-card poll-card-full">
+        <div className="poll-picker-row" style={{display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-end'}}>
+          <div className="form-field" style={{marginBottom: 0}}>
+            <label>Selecteer Poll</label>
             <select className="select-styled" style={{width: '100%'}} value={selectedPollId} onChange={e => setSelectedPollId(e.target.value)}>
               {polls.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
             </select>
           </div>
-          {selectedPoll && (
-            <form className="trainer-session-form" style={{marginTop: '1rem'}} onSubmit={savePoll}>
-              <label>Poll Titel</label>
-              <input type="text" value={pollForm.title} onChange={e => setPollForm(p => ({...p, title: e.target.value}))} />
-              <label>Deadline</label>
-              <input type="datetime-local" value={pollForm.date} onChange={e => setPollForm(p => ({...p, date: e.target.value}))} />
-              
-              <div className="poll-summary" style={{borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem'}}>
-                <strong>Status: {selectedPoll.isActive ? <span className="poll-active-badge">ACTIEF</span> : 'Inactief'}</strong>
-                <p>Stemmen: {selectedPoll.totalVotes}</p>
-                <div className="poll-actions">
-                  <button type="submit" className="btn btn-accent">Opslaan</button>
-                  <button type="button" className="btn btn-primary" onClick={loadVoters}>
-                    {showVoters ? 'Verberg Stemmers' : 'Toon Huidige Stemmers'}
-                  </button>
-                  {!selectedPoll.isActive && <button type="button" className="btn btn-outline" onClick={activatePoll}>Activeer</button>}
-                  <button type="button" className="btn btn-danger" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder</button>
-                </div>
-              </div>
-            </form>
-          )}
+          {selectedPoll && <button type="button" className="btn btn-danger" onClick={() => confirm('DELETE_POLL', selectedPoll)}>Verwijder Poll</button>}
+        </div>
 
-          {showVoters && (
-            <div className="voters-list-area" style={{marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem'}}>
-              <h3 style={{marginBottom: '1rem'}}>Huidige Stemmers</h3>
-              <div className="voters-grid">
-                {voters.length > 0 ? voters.map(v => (
-                  <div key={v.id} className="voter-badge">
-                    <div className="voter-info">
-                      <strong>{v.name}</strong>
-                      <span>{v.option}</span>
-                    </div>
-                    <button className="remove-btn" onClick={() => confirm('REMOVE_VOTE', v)} title="Verwijder stem">&times;</button>
-                  </div>
-                )) : <p className="empty-text">Nog geen stemmen uitgebracht.</p>}
+        {selectedPoll ? (
+          <form className="trainer-poll-edit-form" onSubmit={savePoll} style={{marginTop: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem'}}>
+            <div className="poll-settings">
+              <div className="form-field">
+                <label>Poll Titel</label>
+                <input type="text" value={pollForm.title} onChange={e => setPollForm(p => ({...p, title: e.target.value}))} />
+              </div>
+              <div className="form-field">
+                <label>Deadline</label>
+                <input type="datetime-local" value={pollForm.date} onChange={e => setPollForm(p => ({...p, date: e.target.value}))} />
+              </div>
+              
+              <div className="poll-status-info" style={{marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)'}}>
+                <p><strong>Status:</strong> {selectedPoll.isActive ? <span className="poll-active-badge">ACTIEF</span> : 'Inactief'}</p>
+                <p style={{marginTop: '0.5rem'}}><strong>Stemmen:</strong> {selectedPoll.totalVotes}</p>
+              </div>
+
+              <div className="poll-actions" style={{marginTop: '1.5rem'}}>
+                <button type="submit" className="btn btn-accent btn-full">Wijzigingen Opslaan</button>
+                {!selectedPoll.isActive && <button type="button" className="btn btn-primary btn-full" onClick={activatePoll}>Activeer Nu</button>}
+                <button type="button" className="btn btn-outline btn-full" onClick={loadVoters}>
+                  {showVoters ? 'Verberg Stemmers' : 'Toon Huidige Stemmers'}
+                </button>
               </div>
             </div>
-          )}
-        </article>
-      </section>
+
+            <div className="poll-voters-side">
+              {showVoters ? (
+                <div className="voters-list-area">
+                  <h3 style={{fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--color-muted)'}}>Huidige Stemmers</h3>
+                  <div className="voters-grid" style={{maxHeight: '400px', overflowY: 'auto'}}>
+                    {voters.length > 0 ? voters.map(v => (
+                      <div key={v.id} className="voter-badge">
+                        <div className="voter-info">
+                          <strong>{v.name}</strong>
+                          <span>{v.option}</span>
+                        </div>
+                        <button className="remove-btn" onClick={() => confirm('REMOVE_VOTE', v)} title="Verwijder stem">&times;</button>
+                      </div>
+                    )) : <p className="empty-text">Nog geen stemmen uitgebracht.</p>}
+                  </div>
+                </div>
+              ) : (
+                <div className="poll-placeholder-voters" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-border)'}}>
+                  <p style={{color: 'var(--color-muted)', fontSize: '0.9rem'}}>Klik op 'Toon Stemmers' om de details te zien.</p>
+                </div>
+              )}
+            </div>
+          </form>
+        ) : (
+          <p className="empty-text" style={{marginTop: '1rem'}}>Geen poll geselecteerd of beschikbaar.</p>
+        )}
+      </article>
 
       <Modal isOpen={modal.isOpen} onClose={close} title="Zeker weten?" actions={<>
         <button className="btn btn-outline" onClick={close}>Nee</button>

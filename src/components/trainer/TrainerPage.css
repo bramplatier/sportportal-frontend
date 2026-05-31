@@ -173,58 +173,25 @@
   padding: 0 0.25rem;
 }
 
-.trainer-voting-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+.trainer-voting-grid-header {
+  margin-top: 3rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
 }
 
-.poll-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.poll-picker label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: var(--color-muted);
-}
-
-.poll-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.poll-active-badge {
-  background: var(--color-brand);
-  color: #000;
-  padding: 0.15rem 0.5rem;
-  border-radius: 99px;
-  font-size: 0.65rem;
-  font-weight: 800;
-  margin-left: 0.5rem;
-  display: inline-block;
-  vertical-align: middle;
+.poll-card-full {
+  width: 100%;
 }
 
 .poll-actions {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.poll-actions .btn {
-  flex: 1;
-  min-width: 100px;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .voters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.75rem;
 }
 
@@ -241,7 +208,6 @@
 
 .voter-badge:hover {
   border-color: var(--color-brand);
-  background: rgba(204, 255, 0, 0.02);
 }
 
 .voter-info {
@@ -253,32 +219,45 @@
 
 .voter-info strong {
   font-size: 0.9rem;
-  color: var(--color-ink);
+  color: var(--color-brand);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .voter-info span {
-  font-size: 0.75rem;
-  color: var(--color-brand);
-  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--color-muted);
   text-transform: uppercase;
+  font-weight: 700;
 }
 
-.participant-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--color-muted);
+  letter-spacing: 0.05em;
+}
+
+.form-field input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: #fff;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
 }
 
 @media (max-width: 960px) {
   .trainer-grid { grid-template-columns: 1fr; }
-  .trainer-voting-grid { grid-template-columns: 1fr; }
+  .trainer-poll-edit-form { grid-template-columns: 1fr !important; }
 }
 
-@media (max-width: 480px) {
-  .title-row .btn { width: 100%; }
-  .poll-actions { flex-direction: column; }
-}

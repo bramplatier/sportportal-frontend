@@ -82,6 +82,84 @@ a {
   animation: fade-in 0.4s ease-out;
 }
 
+/* --- Global UI Components --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-align: center;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-full { width: 100%; }
+.btn-primary { background: var(--color-brand); color: #000; }
+.btn-primary:hover:not(:disabled) { background: var(--color-brand-strong); transform: scale(1.02); }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #dc2626; }
+.btn-accent { background: var(--color-accent); color: #000; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+.btn-outline:hover:not(:disabled) { border-color: var(--color-ink); background: rgba(255,255,255,0.05); }
+
+.select-styled {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ccff00'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.select-styled:hover, .select-styled:focus {
+  border-color: var(--color-brand);
+  outline: none;
+  box-shadow: 0 0 10px rgba(204, 255, 0, 0.1);
+}
+
+.alert {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.alert-success {
+  background: rgba(204, 255, 0, 0.1);
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+}
+
+.alert-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-text);
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
