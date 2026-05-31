@@ -15,6 +15,7 @@ const MacManagement = () => {
     loading,
     error,
     registerMac,
+    registerCurrentDevice,
     revokeMac,
     updatePolicy,
     validateMacFormat,
@@ -28,9 +29,25 @@ const MacManagement = () => {
 
   const [registrationError, setRegistrationError] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState('');
+  const [isRegisteringCurrent, setIsRegisteringCurrent] = useState(false);
   const [policySuccess, setPolicySuccess] = useState('');
   const [logOffset, setLogOffset] = useState(0);
   const [expandedMacId, setExpandedMacId] = useState(null);
+
+  const handleRegisterCurrent = async () => {
+    setIsRegisteringCurrent(true);
+    setRegistrationError('');
+    setRegistrationSuccess('');
+    try {
+      await registerCurrentDevice(`Mijn Computer (${new Date().toLocaleDateString('nl-NL')})`);
+      setRegistrationSuccess('Dit apparaat is nu geregistreerd! ✓');
+      setTimeout(() => setRegistrationSuccess(''), 5000);
+    } catch (err) {
+      setRegistrationError(err.message || 'Registratie mislukt');
+    } finally {
+      setIsRegisteringCurrent(false);
+    }
+  };
 
   const handleMacInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,7 +128,17 @@ const MacManagement = () => {
           {isVerified ? (
             <p>Uw apparaat <code>{macStatus.currentMacAddress}</code> is herkend en vertrouwd.</p>
           ) : (
-            <p>Dit apparaat is nog niet geregistreerd voor beheer-toegang.</p>
+            <>
+              <p>Dit apparaat is nog niet geregistreerd voor beheer-toegang.</p>
+              <button 
+                className="btn btn-primary" 
+                style={{marginTop: '1rem'}} 
+                onClick={handleRegisterCurrent}
+                disabled={isRegisteringCurrent || loading}
+              >
+                {isRegisteringCurrent ? 'Bezig met registreren...' : 'Dit apparaat registreren'}
+              </button>
+            </>
           )}
           {error && <div className="error-pill">{error}</div>}
         </div>

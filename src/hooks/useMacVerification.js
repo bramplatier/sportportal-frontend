@@ -167,6 +167,35 @@ export const useMacVerification = () => {
     return macRegex.test(mac);
   }, []);
 
+  /**
+   * Register the current device (auto-detects MAC/Cookie on backend)
+   */
+  const registerCurrentDevice = useCallback(async (deviceName) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // We send a special placeholder or just the device name.
+      // The backend will use the detected MAC from headers or set a new one if allowed.
+      const result = await macApi.registerMacAddress({ 
+        macAddress: 'auto', // Backend logic should handle 'auto' or we can leave it to the user's IP
+        deviceName: deviceName || `Mijn Apparaat (${new Date().toLocaleDateString('nl-NL')})`
+      });
+      
+      if (result.success) {
+        await Promise.all([
+          checkMacStatus(),
+          loadTrustedMacs()
+        ]);
+      }
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [checkMacStatus, loadTrustedMacs]);
+
   // Load data on mount
   useEffect(() => {
     checkMacStatus();
@@ -190,6 +219,7 @@ export const useMacVerification = () => {
     loadAccessLog,
     loadPolicy,
     registerMac,
+    registerCurrentDevice,
     revokeMac,
     updatePolicy,
     validateMacFormat,
