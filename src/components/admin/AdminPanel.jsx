@@ -67,9 +67,6 @@ const AdminPanel = () => {
         const currentStatus = status?.data || status;
         const me = meRes?.user || meRes;
         
-        console.log('[DEBUG] AdminPanel loadInitial status:', currentStatus);
-        console.log('[DEBUG] AdminPanel loadInitial me:', me);
-        
         setHasPasskey(!!me?.hasPasskey);
 
         // If MAC is verified or not required, load the rest
