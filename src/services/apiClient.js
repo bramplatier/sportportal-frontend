@@ -179,6 +179,14 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify({ otp, setupToken }),
   }),
+  getAuditLogs: ({ limit = 100, offset = 0 } = {}) => request(`/api/admin/audit-log?limit=${limit}&offset=${offset}`),
+  getStats: () => request('/api/admin/stats'),
+  getCategories: () => request('/api/admin/categories'),
+  getUserCategories: (userId) => request(`/api/admin/users/${userId}/categories`),
+  updateUserCategory: (userId, { categoryId, joined }) => request(`/api/admin/users/${userId}/categories`, {
+    method: 'POST',
+    body: JSON.stringify({ categoryId, joined }),
+  }),
 };
 
 export const authApi = {

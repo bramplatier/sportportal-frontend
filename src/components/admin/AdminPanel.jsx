@@ -25,6 +25,10 @@ const AdminPanel = () => {
   const { user: currentUser } = useAuth(); // Hernoemd naar currentUser voor duidelijkheid
   const [overview, setOverview] = useState(EMPTY_OVERVIEW);
   const [users, setUsers] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [detailedStats, setDetailedStats] = useState(null);
+  const [allCategories, setAllCategories] = useState([]);
+  const [userCategories, setUserCategories] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
   const [search, setSearch] = useState('');
   const [newUserForm, setNewUserForm] = useState({
@@ -65,6 +69,35 @@ const AdminPanel = () => {
     };
     load();
   }, []);
+
+  const loadLogs = async () => {
+    setIsActionLoading(true);
+    try {
+      const res = await adminApi.getAuditLogs();
+      setAuditLogs(res.logs || []);
+    } catch (err) {
+      setError('Logs laden mislukt.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    setIsActionLoading(true);
+    try {
+      const res = await adminApi.getStats();
+      setDetailedStats(res.stats || null);
+    } catch (err) {
+      setError('Statistieken laden mislukt.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'logs') loadLogs();
+    if (activeTab === 'stats') loadStats();
+  }, [activeTab]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -179,6 +212,37 @@ const AdminPanel = () => {
     }
   };
 
+  const editCategories = async (user) => {
+    setIsActionLoading(true);
+    try {
+      const [all, mine] = await Promise.all([
+        adminApi.getCategories(),
+        adminApi.getUserCategories(user.id)
+      ]);
+      setAllCategories(all);
+      setUserCategories(mine);
+      setModalConfig({ isOpen: true, type: 'EDIT_CATEGORIES', data: user });
+    } catch (err) {
+      setError('Categorieën laden mislukt.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const toggleCategory = async (categoryId, joined) => {
+    try {
+      await adminApi.updateUserCategory(modalConfig.data.id, { categoryId, joined });
+      if (joined) {
+        const cat = allCategories.find(c => c.id === categoryId);
+        setUserCategories(prev => [...prev, cat]);
+      } else {
+        setUserCategories(prev => prev.filter(c => c.id !== categoryId));
+      }
+    } catch (err) {
+      setError('Update mislukt.');
+    }
+  };
+
   return (
     <section className="admin-wrap">
       <header className="admin-header">
@@ -210,6 +274,8 @@ const AdminPanel = () => {
         <div className="tabs">
           <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>GEBRUIKERS</button>
           <button className={activeTab === 'mac' ? 'active' : ''} onClick={() => setActiveTab('mac')}>🔒 MAC</button>
+          <button className={activeTab === 'logs' ? 'active' : ''} onClick={() => setActiveTab('logs')}>📜 LOGS</button>
+          <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => setActiveTab('stats')}>📊 STATS</button>
         </div>
         {activeTab === 'users' && <input type="search" placeholder="Zoek op naam/email..." value={search} onChange={e => setSearch(e.target.value)} />}
       </div>
@@ -254,6 +320,9 @@ const AdminPanel = () => {
                         </td>
                         <td>
                           <div className="user-actions-row">
+                            {['trainer', 'admin'].includes(normalizeRole(u.role)) && (
+                              <button className="btn btn-primary" onClick={() => editCategories(u)} title="Specialisaties">Cats</button>
+                            )}
                             {!u.mfaEnabled ? (
                               <button className="btn btn-accent" onClick={() => startMfaSetup(u)}>MFA Setup</button>
                             ) : (
@@ -269,7 +338,62 @@ const AdminPanel = () => {
               </div>
             </>
           )}
+
           {activeTab === 'mac' && <MacManagement />}
+
+          {activeTab === 'logs' && (
+            <div className="table-shell">
+              <table className="compact-table">
+                <thead>
+                  <tr>
+                    <th>Tijd</th>
+                    <th>Type</th>
+                    <th>Gebruiker</th>
+                    <th>IP / Info</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLogs.map(log => (
+                    <tr key={log.id}>
+                      <td style={{fontSize:'0.75rem'}}>{new Date(log.created_at).toLocaleString('nl-NL')}</td>
+                      <td><span className={`status-pill ${log.event_type.includes('FAIL') ? 'inactive' : 'active'}`}>{log.event_type}</span></td>
+                      <td>{log.email || 'System'}</td>
+                      <td><code style={{fontSize:'0.7rem'}}>{log.ip_address}</code></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'stats' && detailedStats && (
+            <div className="stats-grid">
+              <div className="admin-card">
+                <h3>Stemverdeling</h3>
+                {detailedStats.voteDistribution.length === 0 ? <p>Geen stemmen gevonden.</p> : (
+                  <div className="stats-list">
+                    {detailedStats.voteDistribution.map(v => (
+                      <div key={v.option_id} className="stat-row">
+                        <span>{v.option_id}</span>
+                        <strong>{v.count} stemmen</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="admin-card">
+                <h3>Beveiligingsadoptie</h3>
+                <div className="stats-list">
+                  {detailedStats.mfaAdoption.map(m => (
+                    <div key={m.mfa_enabled ? 'enabled' : 'disabled'} className="stat-row">
+                      <span>MFA {m.mfa_enabled ? 'Ingeschakeld' : 'Uitgeschakeld'}</span>
+                      <strong>{m.count} gebruikers</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -286,6 +410,21 @@ const AdminPanel = () => {
       >
         {modalConfig.type === 'DELETE_USER' && <p>Gebruiker {modalConfig.data?.name} definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</p>}
         {modalConfig.type === 'RESET_MFA' && <p>MFA herstarten voor {modalConfig.data?.name}?</p>}
+        {modalConfig.type === 'EDIT_CATEGORIES' && (
+          <div className="category-edit-list" style={{display:'flex', flexDirection:'column', gap:'0.75rem'}}>
+            <p>Specialisaties voor <strong>{modalConfig.data?.name}</strong>:</p>
+            {allCategories.map(cat => (
+              <label key={cat.id} className="checkbox-label" style={{justifyContent:'space-between', padding:'0.5rem', background:'var(--color-surface)', borderRadius:'4px'}}>
+                <span>{cat.name}</span>
+                <input 
+                  type="checkbox" 
+                  checked={userCategories.some(c => c.id === cat.id)}
+                  onChange={(e) => toggleCategory(cat.id, e.target.checked)}
+                />
+              </label>
+            ))}
+          </div>
+        )}
         {modalConfig.type === 'MFA_SETUP' && mfaSetupData && (
           <div style={{textAlign: 'center'}}>
             <p>Scan QR voor <strong>{modalConfig.data?.email}</strong></p>
