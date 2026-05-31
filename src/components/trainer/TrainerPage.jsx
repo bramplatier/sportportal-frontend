@@ -162,6 +162,20 @@ const TrainerPage = () => {
     } catch (err) { setError('Aanmaken mislukt.'); }
   };
 
+  const createPoll = async () => {
+    try {
+      const created = await trainerApi.createPoll({ 
+        title: 'Nieuwe Poll', 
+        options: ['Optie 1', 'Optie 2'],
+        closesAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
+      });
+      const norm = normalizePoll(created);
+      setPolls(prev => [norm, ...prev]);
+      setSelectedPollId(norm.id);
+      showSuccess('Nieuwe poll aangemaakt.');
+    } catch (err) { setError('Aanmaken poll mislukt.'); }
+  };
+
   const activatePoll = async () => {
     try {
       await trainerApi.setActivePoll({ pollId: selectedPoll.id });
@@ -221,11 +235,12 @@ const TrainerPage = () => {
         </article>
       </div>
 
-      <div className="trainer-voting-grid-header">
-        <h2 style={{fontSize: '1.5rem', color: 'var(--color-brand)', marginBottom: '1rem'}}>📊 Poll Beheer</h2>
+      <div className="trainer-voting-grid-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3rem', borderTop: '1px solid var(--color-border)', paddingTop: '2rem'}}>
+        <h2 style={{fontSize: '1.5rem', color: 'var(--color-brand)', marginBottom: 0}}>📊 Poll Beheer</h2>
+        <button className="btn btn-primary" onClick={createPoll}>+ Nieuw</button>
       </div>
 
-      <article className="trainer-card poll-card-full">
+      <article className="trainer-card poll-card-full" style={{marginTop: '1.5rem'}}>
         <div className="poll-picker-row" style={{display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-end'}}>
           <div className="form-field" style={{marginBottom: 0}}>
             <label>Selecteer Poll</label>
