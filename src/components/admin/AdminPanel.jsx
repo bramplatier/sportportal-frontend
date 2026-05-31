@@ -25,8 +25,6 @@ const AdminPanel = () => {
   const { user: currentUser } = useAuth(); // Hernoemd naar currentUser voor duidelijkheid
   const [overview, setOverview] = useState(EMPTY_OVERVIEW);
   const [users, setUsers] = useState([]);
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [detailedStats, setDetailedStats] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [userCategories, setUserCategories] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
@@ -69,35 +67,6 @@ const AdminPanel = () => {
     };
     load();
   }, []);
-
-  const loadLogs = async () => {
-    setIsActionLoading(true);
-    try {
-      const res = await adminApi.getAuditLogs();
-      setAuditLogs(res.logs || []);
-    } catch (err) {
-      setError('Logs laden mislukt.');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    setIsActionLoading(true);
-    try {
-      const res = await adminApi.getStats();
-      setDetailedStats(res.stats || null);
-    } catch (err) {
-      setError('Statistieken laden mislukt.');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'logs') loadLogs();
-    if (activeTab === 'stats') loadStats();
-  }, [activeTab]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -274,8 +243,6 @@ const AdminPanel = () => {
         <div className="tabs">
           <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>GEBRUIKERS</button>
           <button className={activeTab === 'mac' ? 'active' : ''} onClick={() => setActiveTab('mac')}>🔒 MAC</button>
-          <button className={activeTab === 'logs' ? 'active' : ''} onClick={() => setActiveTab('logs')}>📜 LOGS</button>
-          <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => setActiveTab('stats')}>📊 STATS</button>
         </div>
         {activeTab === 'users' && <input type="search" placeholder="Zoek op naam/email..." value={search} onChange={e => setSearch(e.target.value)} />}
       </div>
@@ -340,60 +307,6 @@ const AdminPanel = () => {
           )}
 
           {activeTab === 'mac' && <MacManagement />}
-
-          {activeTab === 'logs' && (
-            <div className="table-shell">
-              <table className="compact-table">
-                <thead>
-                  <tr>
-                    <th>Tijd</th>
-                    <th>Type</th>
-                    <th>Gebruiker</th>
-                    <th>IP / Info</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs.map(log => (
-                    <tr key={log.id}>
-                      <td style={{fontSize:'0.75rem'}}>{new Date(log.created_at).toLocaleString('nl-NL')}</td>
-                      <td><span className={`status-pill ${log.event_type.includes('FAIL') ? 'inactive' : 'active'}`}>{log.event_type}</span></td>
-                      <td>{log.email || 'System'}</td>
-                      <td><code style={{fontSize:'0.7rem'}}>{log.ip_address}</code></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {activeTab === 'stats' && detailedStats && (
-            <div className="stats-grid">
-              <div className="admin-card">
-                <h3>Stemverdeling</h3>
-                {detailedStats.voteDistribution.length === 0 ? <p>Geen stemmen gevonden.</p> : (
-                  <div className="stats-list">
-                    {detailedStats.voteDistribution.map(v => (
-                      <div key={v.option_id} className="stat-row">
-                        <span>{v.option_id}</span>
-                        <strong>{v.count} stemmen</strong>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="admin-card">
-                <h3>Beveiligingsadoptie</h3>
-                <div className="stats-list">
-                  {detailedStats.mfaAdoption.map(m => (
-                    <div key={m.mfa_enabled ? 'enabled' : 'disabled'} className="stat-row">
-                      <span>MFA {m.mfa_enabled ? 'Ingeschakeld' : 'Uitgeschakeld'}</span>
-                      <strong>{m.count} gebruikers</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
